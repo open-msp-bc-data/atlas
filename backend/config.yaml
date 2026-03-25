@@ -1,0 +1,27 @@
+privacy:
+  k_min_unique_phys: 5
+  dominance_threshold: 0.60
+  percentile_topcode: 0.99
+  location_jitter_km: 1.5
+  salt: "msp-bc-atlas-default-salt"
+
+geocoding:
+  provider_primary: "nominatim"
+  provider_fallback: null
+  min_confidence: 0.6
+  facility_snap_meters: 500
+
+entity_resolution:
+  fuzzy_threshold: 90
+  manual_overrides: "overrides/entity_links.yml"
+
+database:
+  url: "sqlite:///msp_bc.db"
+
+api:
+  host: "0.0.0.0"
+  port: 8000
+  admin_token: "change-me-in-production"
+
+build:
+  years: ["2021-2022", "2022-2023", "2023-2024"]
