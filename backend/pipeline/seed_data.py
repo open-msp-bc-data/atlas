@@ -73,9 +73,11 @@ def generate_seed_data(n_physicians: int = 150, seed: int = 42):
     physicians = []
 
     for i in range(n_physicians):
-        first = rng.choice(FIRST_NAMES)
-        last = rng.choice(LAST_NAMES)
-        full_name = f"Dr. {first} {last}"
+        first = FIRST_NAMES[i % len(FIRST_NAMES)]
+        last = LAST_NAMES[i // len(FIRST_NAMES) % len(LAST_NAMES)]
+        # Ensure uniqueness by appending index when needed
+        suffix = f" {i // (len(FIRST_NAMES) * len(LAST_NAMES)) + 1}" if i >= len(FIRST_NAMES) * len(LAST_NAMES) else ""
+        full_name = f"Dr. {first} {last}{suffix}"
         specialty = rng.choice(SPECIALTIES)
         city = rng.choice(cities)
         lat, lng = BC_CITY_CENTROIDS[city]
