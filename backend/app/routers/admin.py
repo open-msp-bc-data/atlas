@@ -15,7 +15,8 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 
 def _verify_admin_token(x_admin_token: str = Header(...)):
     """Dependency that validates the admin bearer token."""
-    expected = get_api_config().get("admin_token", "")
+    import os
+    expected = os.environ.get("ADMIN_TOKEN") or get_api_config().get("admin_token", "")
     if not expected or x_admin_token != expected:
         raise HTTPException(status_code=403, detail="Invalid admin token")
 

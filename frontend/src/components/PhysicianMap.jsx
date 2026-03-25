@@ -1,6 +1,7 @@
-import { useEffect, useRef, useMemo } from 'react';
+import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import 'leaflet.markercluster';
+import 'leaflet.heat';
 
 // Fix default Leaflet marker icon issue in bundled environments
 delete L.Icon.Default.prototype._getIconUrl;
@@ -107,17 +108,27 @@ export default function PhysicianMap({
         icon: createCircleIcon(color),
       });
 
-      const tooltipContent = `
-        <div class="physician-tooltip">
-          <strong>${phys.pseudo_id}</strong><br/>
-          Specialty: ${phys.specialty_group || 'Unknown'}<br/>
-          City: ${phys.city || 'Unknown'}<br/>
-          Billing: ${phys.latest_billing_range || 'N/A'}<br/>
-          YoY Change: ${phys.yoy_change != null ? (phys.yoy_change * 100).toFixed(1) + '%' : 'N/A'}
-        </div>
-      `;
+      const tooltipEl = document.createElement('div');
+      tooltipEl.className = 'physician-tooltip';
 
-      marker.bindTooltip(tooltipContent, { sticky: true });
+      const idEl = document.createElement('strong');
+      idEl.textContent = phys.pseudo_id;
+      tooltipEl.appendChild(idEl);
+      tooltipEl.appendChild(document.createElement('br'));
+
+      tooltipEl.appendChild(document.createTextNode(`Specialty: ${phys.specialty_group || 'Unknown'}`));
+      tooltipEl.appendChild(document.createElement('br'));
+      tooltipEl.appendChild(document.createTextNode(`City: ${phys.city || 'Unknown'}`));
+      tooltipEl.appendChild(document.createElement('br'));
+      tooltipEl.appendChild(document.createTextNode(`Billing: ${phys.latest_billing_range || 'N/A'}`));
+      tooltipEl.appendChild(document.createElement('br'));
+      tooltipEl.appendChild(
+        document.createTextNode(
+          `YoY Change: ${phys.yoy_change != null ? (phys.yoy_change * 100).toFixed(1) + '%' : 'N/A'}`
+        )
+      );
+
+      marker.bindTooltip(tooltipEl, { sticky: true });
       marker.on('click', () => {
         if (onSelectPhysician) onSelectPhysician(phys.pseudo_id);
       });

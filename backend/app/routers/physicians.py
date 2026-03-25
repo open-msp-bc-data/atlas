@@ -34,27 +34,59 @@ def list_physicians(
 
     records = q.offset(offset).limit(limit).all()
 
+    if not records:
+        return []
+
+    # Batch-fetch latest and previous billings for all physicians to avoid N+1 queries
+    physician_ids = [rec.physician_id for rec in records]
+
+    billing_subq = (
+        db.query(
+            Billing.physician_id.label("physician_id"),
+            Billing.total_billings.label("total_billings"),
+            Billing.year.label("year"),
+            func.row_number()
+            .over(
+                partition_by=Billing.physician_id,
+                order_by=Billing.year.desc(),
+            )
+            .label("rn"),
+        )
+        .filter(Billing.physician_id.in_(physician_ids))
+        .subquery()
+    )
+
+    billing_rows = (
+        db.query(
+            billing_subq.c.physician_id,
+            billing_subq.c.total_billings,
+            billing_subq.c.rn,
+        )
+        .filter(billing_subq.c.rn.in_([1, 2]))
+        .all()
+    )
+
+    # Map: physician_id -> {1: latest_total, 2: previous_total}
+    billing_map: dict[int, dict[int, float]] = {}
+    for row in billing_rows:
+        pid = row.physician_id
+        rn = row.rn
+        billing_map.setdefault(pid, {})[rn] = row.total_billings
+
     results = []
     for rec in records:
-        # Fetch latest billing for this physician
-        latest = (
-            db.query(Billing)
-            .filter(Billing.physician_id == rec.physician_id)
-            .order_by(desc(Billing.year))
-            .first()
-        )
-        # Fetch second-latest for YoY
-        prev = (
-            db.query(Billing)
-            .filter(Billing.physician_id == rec.physician_id)
-            .order_by(desc(Billing.year))
-            .offset(1)
-            .first()
-        )
-        latest_range = billing_range(latest.total_billings) if latest else None
+        pid = rec.physician_id
+        latest_total = billing_map.get(pid, {}).get(1)
+        prev_total = billing_map.get(pid, {}).get(2)
+
+        latest_range = billing_range(latest_total) if latest_total is not None else None
         yoy = None
-        if latest and prev and prev.total_billings > 0:
-            yoy = round((latest.total_billings - prev.total_billings) / prev.total_billings, 4)
+        if (
+            latest_total is not None
+            and prev_total is not None
+            and prev_total > 0
+        ):
+            yoy = round((latest_total - prev_total) / prev_total, 4)
 
         results.append(
             PhysicianPublicOut(
@@ -87,10 +119,10 @@ def heatmap(
     if year:
         q = q.filter(Billing.year == year)
 
-    q = q.group_by(PhysicianPublic.id).having(
+    q = q.filter(
         PhysicianPublic.lat_approx.isnot(None),
         PhysicianPublic.lng_approx.isnot(None),
-    )
+    ).group_by(PhysicianPublic.id)
 
     return [
         HeatmapPoint(lat=row.lat_approx, lng=row.lng_approx, intensity=row.intensity)

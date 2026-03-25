@@ -192,12 +192,14 @@ class TestAdminEndpoint:
         resp = client.get("/admin/raw")
         assert resp.status_code == 422
 
-    def test_wrong_token_returns_403(self, client):
+    def test_wrong_token_returns_403(self, client, monkeypatch):
+        monkeypatch.setenv("ADMIN_TOKEN", "test-secret-token")
         resp = client.get("/admin/raw", headers={"x-admin-token": "wrong"})
         assert resp.status_code == 403
 
-    def test_valid_token(self, client):
-        resp = client.get("/admin/raw", headers={"x-admin-token": "change-me-in-production"})
+    def test_valid_token(self, client, monkeypatch):
+        monkeypatch.setenv("ADMIN_TOKEN", "test-secret-token")
+        resp = client.get("/admin/raw", headers={"x-admin-token": "test-secret-token"})
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) >= 1

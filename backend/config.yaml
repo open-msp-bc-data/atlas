@@ -21,7 +21,9 @@ database:
 api:
   host: "0.0.0.0"
   port: 8000
-  admin_token: "change-me-in-production"
+  # admin_token is intentionally not set here to avoid committing a usable secret.
+  # Provide a strong, random token via the ADMIN_TOKEN environment variable
+  # or an untracked override config file.
 
 build:
   years: ["2021-2022", "2022-2023", "2023-2024"]

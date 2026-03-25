@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import random
 import sys
 from pathlib import Path
@@ -111,7 +112,9 @@ def generate_seed_data(n_physicians: int = 150, seed: int = 42):
 
         # Create public record
         pseudo = deterministic_pseudo_id(full_name)
-        lat_approx, lng_approx = jitter_location(lat, lng, seed=hash(full_name) % 2**31)
+        # Use a stable hash (SHA-256) instead of Python's hash() which is randomized
+        stable_seed = int(hashlib.sha256(full_name.encode()).hexdigest()[:8], 16)
+        lat_approx, lng_approx = jitter_location(lat, lng, seed=stable_seed)
         pub = PhysicianPublic(
             physician_id=phys.id,
             pseudo_id=pseudo,

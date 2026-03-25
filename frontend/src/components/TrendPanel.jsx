@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
-  LineChart,
-  Line,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -9,6 +9,19 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 import { fetchTrend } from '../api';
+
+/**
+ * Parse a billing_range string like "200k–250k" into its midpoint value in thousands.
+ * Returns null if the string cannot be parsed.
+ */
+function parseBillingMidpoint(rangeStr) {
+  if (!rangeStr) return null;
+  const match = rangeStr.match(/(\d+)k\s*[–\-]\s*(\d+)k/);
+  if (!match) return null;
+  const low = parseInt(match[1], 10);
+  const high = parseInt(match[2], 10);
+  return (low + high) / 2;
+}
 
 export default function TrendPanel({ pseudoId, onClose }) {
   const [trend, setTrend] = useState(null);
@@ -27,6 +40,14 @@ export default function TrendPanel({ pseudoId, onClose }) {
 
   if (!pseudoId) return null;
 
+  // Transform trend data to include a numeric midpoint for charting
+  const chartData =
+    trend?.data?.map((d) => ({
+      year: d.year,
+      billing_range: d.billing_range,
+      midpoint: parseBillingMidpoint(d.billing_range),
+    })) || [];
+
   return (
     <div className="trend-panel">
       <h3>
@@ -39,30 +60,32 @@ export default function TrendPanel({ pseudoId, onClose }) {
       {loading && <p>Loading trend data…</p>}
       {error && <p style={{ color: '#d93025' }}>Error: {error}</p>}
 
-      {trend && trend.data && trend.data.length > 0 && (
+      {trend && chartData.length > 0 && (
         <>
           <p style={{ fontSize: '0.8rem', color: '#666', marginBottom: '0.5rem' }}>
             Specialty: {trend.specialty_group || 'Unknown'}
           </p>
           <ResponsiveContainer width="100%" height={150}>
-            <LineChart data={trend.data}>
+            <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="year" tick={{ fontSize: 10 }} />
-              <YAxis tick={{ fontSize: 10 }} />
-              <Tooltip />
-              <Line
-                type="monotone"
-                dataKey="billing_range"
-                stroke="#1a73e8"
-                strokeWidth={2}
-                dot={{ r: 4 }}
-                name="Billing Range"
+              <YAxis
+                tick={{ fontSize: 10 }}
+                tickFormatter={(v) => `${v}k`}
+                label={{ value: '$ (thousands)', angle: -90, position: 'insideLeft', fontSize: 9 }}
               />
-            </LineChart>
+              <Tooltip
+                formatter={(value, name, props) => [
+                  props.payload.billing_range || `${value}k`,
+                  'Billing',
+                ]}
+              />
+              <Bar dataKey="midpoint" fill="#1a73e8" radius={[4, 4, 0, 0]} name="Billing" />
+            </BarChart>
           </ResponsiveContainer>
 
           <div style={{ fontSize: '0.8rem', marginTop: '0.5rem' }}>
-            {trend.data.map((d) => (
+            {chartData.map((d) => (
               <div key={d.year}>
                 <strong>{d.year}:</strong> {d.billing_range || 'Suppressed'}
               </div>
@@ -71,7 +94,7 @@ export default function TrendPanel({ pseudoId, onClose }) {
         </>
       )}
 
-      {trend && (!trend.data || trend.data.length === 0) && (
+      {trend && chartData.length === 0 && (
         <p style={{ fontSize: '0.85rem', color: '#666' }}>No trend data available.</p>
       )}
     </div>
