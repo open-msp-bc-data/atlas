@@ -16,7 +16,9 @@ import { fetchTrend } from '../api';
  */
 function parseBillingMidpoint(rangeStr) {
   if (!rangeStr) return null;
-  const match = rangeStr.match(/(\d+)k\s*[–\-]\s*(\d+)k/);
+  // Normalize all Unicode dash variants (en-dash, em-dash, etc.) to a standard hyphen
+  const normalized = rangeStr.replace(/[\u2013\u2014\u2015\u2212]/g, '-');
+  const match = normalized.match(/(\d+)k\s*-\s*(\d+)k/);
   if (!match) return null;
   const low = parseInt(match[1], 10);
   const high = parseInt(match[2], 10);
