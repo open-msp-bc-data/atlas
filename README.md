@@ -157,8 +157,10 @@ privacy:
   k_min_unique_phys: 5          # Minimum group size for k-anonymity
   dominance_threshold: 0.60     # Suppress if one contributor ≥60%
   location_jitter_km: 1.5       # Random coordinate offset (km)
-  salt: "your-secret-salt"      # Salt for deterministic hashing
+  salt: "CHANGE_ME_IN_PRODUCTION"  # Placeholder – override in production
 ```
+
+> **Note:** The `salt` value in committed config is a placeholder for local development/testing only. In production, override it with a long, random secret via an untracked config file or environment-specific deployment. The admin token is **not** stored in `config.yaml` — see Environment Variables below.
 
 ### Environment Variables
 
