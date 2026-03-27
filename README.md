@@ -58,7 +58,7 @@ bc_msp_map/
 │   │   ├── entity_resolution.py# Fuzzy name matching
 │   │   ├── aggregate.py        # Aggregation with privacy enforcement
 │   │   └── seed_data.py        # Demo data generator
-│   ├── tests/                  # pytest test suite (53 tests)
+│   ├── tests/                  # pytest test suite
 │   ├── config.yaml             # Application configuration
 │   └── requirements.txt        # Python dependencies
 ├── frontend/
