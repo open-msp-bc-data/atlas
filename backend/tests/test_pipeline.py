@@ -7,6 +7,7 @@ import pytest
 from pipeline.entity_resolution import normalize_name, build_entity_key, match_payee_to_registrants, resolve_entities
 from pipeline.geocode import geocode_address, _city_centroid_fallback, _lookup_health_authority, BC_CITY_CENTROIDS
 from pipeline.ingest_bluebook import extract_fiscal_year, _parse_row
+from pipeline.aggregate import compute_aggregations, compute_yoy
 
 
 class TestNormalizeName:
@@ -123,3 +124,98 @@ class TestBluebookParser:
         row = ["Dr. John Smith", "No amount here"]
         result = _parse_row(row, 0)
         assert result is None
+
+
+class TestComputeAggregations:
+    def _make_records(self, n, city="Vancouver", fiscal_year="2023-2024", spec="All"):
+        """Generate *n* billing records with unique entity keys."""
+        return [
+            {
+                "fiscal_year": fiscal_year,
+                "city": city,
+                "specialty_group": spec,
+                "amount_gross": 100_000 + i * 10_000,
+                "entity_key_hash": f"ent-{i}",
+            }
+            for i in range(n)
+        ]
+
+    def test_k_anonymity_suppression(self):
+        """Groups with fewer than k physicians should be suppressed."""
+        records = self._make_records(3, city="SmallTown")
+        result = compute_aggregations(records, geo_level="city", geo_key="city")
+        assert len(result) == 1
+        assert result[0]["suppressed"] is True
+        assert result[0]["suppression_reason"] == "k_min"
+        assert result[0]["total_payments"] is None
+
+    def test_k_anonymity_passes(self):
+        """Groups with at least k physicians should not be suppressed by k-anonymity."""
+        records = self._make_records(6, city="LargeCity")
+        result = compute_aggregations(records, geo_level="city", geo_key="city")
+        assert len(result) == 1
+        assert result[0]["suppressed"] is False
+        assert result[0]["total_payments"] is not None
+        assert result[0]["total_payments"] > 0
+
+    def test_dominance_suppression(self):
+        """Groups where one contributor dominates should be suppressed."""
+        records = [
+            {"fiscal_year": "2023-2024", "city": "DomCity", "specialty_group": "All",
+             "amount_gross": 900_000, "entity_key_hash": "big"},
+        ] + [
+            {"fiscal_year": "2023-2024", "city": "DomCity", "specialty_group": "All",
+             "amount_gross": 10_000, "entity_key_hash": f"small-{i}"}
+            for i in range(5)
+        ]
+        result = compute_aggregations(records, geo_level="city", geo_key="city")
+        assert len(result) == 1
+        assert result[0]["suppressed"] is True
+        assert result[0]["suppression_reason"] == "dominance"
+
+    def test_max_share_not_in_output(self):
+        """Internal max_share field should be stripped from output."""
+        records = self._make_records(6)
+        result = compute_aggregations(records)
+        for cell in result:
+            assert "max_share" not in cell
+
+
+class TestComputeYoY:
+    def _cell(self, geo_id, total, suppressed=False):
+        return {
+            "geo_level": "city",
+            "geo_id": geo_id,
+            "specialty_group": "All",
+            "total_payments": total,
+            "suppressed": suppressed,
+        }
+
+    def test_yoy_computed(self):
+        """YoY should be computed for dual-year k-safe cells."""
+        current = [self._cell("Van", 110_000)]
+        previous = [self._cell("Van", 100_000)]
+        result = compute_yoy(current, previous)
+        assert len(result) == 1
+        assert result[0]["pct_change_yoy"] == pytest.approx(0.1, abs=0.001)
+
+    def test_yoy_skipped_when_previous_suppressed(self):
+        """YoY should not be set when the previous year cell is suppressed."""
+        current = [self._cell("Van", 110_000)]
+        previous = [self._cell("Van", 100_000, suppressed=True)]
+        result = compute_yoy(current, previous)
+        assert result[0].get("pct_change_yoy") is None
+
+    def test_yoy_skipped_when_current_suppressed(self):
+        """YoY should not be set when the current year cell is suppressed."""
+        current = [self._cell("Van", 110_000, suppressed=True)]
+        previous = [self._cell("Van", 100_000)]
+        result = compute_yoy(current, previous)
+        assert result[0].get("pct_change_yoy") is None
+
+    def test_yoy_no_matching_previous(self):
+        """YoY should remain None if there's no matching previous cell."""
+        current = [self._cell("Van", 110_000)]
+        previous = [self._cell("Kel", 100_000)]
+        result = compute_yoy(current, previous)
+        assert result[0].get("pct_change_yoy") is None
