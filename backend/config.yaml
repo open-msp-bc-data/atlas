@@ -3,7 +3,11 @@ privacy:
   dominance_threshold: 0.60
   percentile_topcode: 0.99
   location_jitter_km: 1.5
-  salt: "msp-bc-atlas-default-salt"
+  # Pseudo-ID salt MUST NOT be a real secret in committed config.
+  # Use this only as a placeholder for local/dev/tests and override in production
+  # via an environment variable or an untracked override config file.
+  # In production, use a long, random, secret value and fail fast if this default is used.
+  salt: "CHANGE_ME_IN_PRODUCTION"
 
 geocoding:
   provider_primary: "nominatim"
