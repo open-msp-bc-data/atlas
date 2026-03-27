@@ -93,16 +93,15 @@ def generalize_specialty(specialty: str | None) -> str:
 
 def apply_k_anonymity(
     records: list[dict[str, Any]],
-    group_keys: list[str],
     k_min: int | None = None,
 ) -> list[dict[str, Any]]:
-    """Suppress groups where the number of unique physicians is below *k_min*.
+    """Suppress records where the number of unique physicians is below *k_min*.
 
-    Each record dict must contain a ``"n_physicians"`` key (or the value at
-    ``group_keys`` will be used for grouping while ``n_physicians`` is checked).
+    Each record dict must contain an ``"n_physicians"`` key indicating the
+    count of unique physicians contributing to that record.
 
     Returns the list with ``suppressed=True`` and ``suppression_reason`` set
-    for groups that fail the threshold.
+    for records that fail the threshold.
     """
     if k_min is None:
         k_min = get_privacy_config().get("k_min_unique_phys", 5)

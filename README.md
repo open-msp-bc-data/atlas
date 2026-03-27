@@ -150,7 +150,7 @@ python -m pytest tests/ -v
 
 ## Configuration
 
-All settings are in `backend/config.yaml`:
+Privacy and geocoding settings are in `backend/config.yaml`:
 
 ```yaml
 privacy:
@@ -158,10 +158,14 @@ privacy:
   dominance_threshold: 0.60     # Suppress if one contributor ≥60%
   location_jitter_km: 1.5       # Random coordinate offset (km)
   salt: "your-secret-salt"      # Salt for deterministic hashing
-
-api:
-  admin_token: "change-me"      # Admin API token
 ```
+
+### Environment Variables
+
+| Variable | Description |
+|----------|-------------|
+| `ADMIN_TOKEN` | **Required** for admin API access. Set to a strong, random token. The `/admin/raw` endpoint will reject requests unless this is configured. |
+| `CORS_ORIGINS` | Comma-separated list of allowed frontend origins (default: `http://localhost:5173,http://localhost:4173`). |
 
 ## Data Sources
 

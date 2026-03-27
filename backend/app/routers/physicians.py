@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
-from sqlalchemy import func, desc
+from sqlalchemy import func
 
 from ..database import get_db
 from ..models import PhysicianPublic, Billing
@@ -19,6 +19,7 @@ def list_physicians(
     specialty: str | None = Query(None),
     city: str | None = Query(None),
     health_authority: str | None = Query(None),
+    year: str | None = Query(None, description="Fiscal year for billing range/YoY (e.g. 2023-2024)"),
     limit: int = Query(200, le=1000),
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
@@ -40,21 +41,23 @@ def list_physicians(
     # Batch-fetch latest and previous billings for all physicians to avoid N+1 queries
     physician_ids = [rec.physician_id for rec in records]
 
-    billing_subq = (
-        db.query(
-            Billing.physician_id.label("physician_id"),
-            Billing.total_billings.label("total_billings"),
-            Billing.year.label("year"),
-            func.row_number()
-            .over(
-                partition_by=Billing.physician_id,
-                order_by=Billing.year.desc(),
-            )
-            .label("rn"),
+    billing_base = db.query(
+        Billing.physician_id.label("physician_id"),
+        Billing.total_billings.label("total_billings"),
+        Billing.year.label("year"),
+        func.row_number()
+        .over(
+            partition_by=Billing.physician_id,
+            order_by=Billing.year.desc(),
         )
-        .filter(Billing.physician_id.in_(physician_ids))
-        .subquery()
-    )
+        .label("rn"),
+    ).filter(Billing.physician_id.in_(physician_ids))
+
+    # When a specific year is requested, only consider that year and earlier
+    if year:
+        billing_base = billing_base.filter(Billing.year <= year)
+
+    billing_subq = billing_base.subquery()
 
     billing_rows = (
         db.query(

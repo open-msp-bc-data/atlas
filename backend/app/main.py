@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -16,10 +18,11 @@ app = FastAPI(
     version="0.1.0",
 )
 
-# CORS – allow the frontend dev server
+# CORS – restrict to known frontend origins (configurable via CORS_ORIGINS env var)
+_cors_origins = os.environ.get("CORS_ORIGINS", "http://localhost:5173,http://localhost:4173").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[o.strip() for o in _cors_origins],
     allow_methods=["GET"],
     allow_headers=["*"],
 )

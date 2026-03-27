@@ -87,7 +87,7 @@ class TestKAnonymity:
             {"geo_id": "a", "n_physicians": 3, "total_payments": 1000, "median_payments": 500, "pct_change_yoy": 0.1},
             {"geo_id": "b", "n_physicians": 10, "total_payments": 5000, "median_payments": 500, "pct_change_yoy": 0.2},
         ]
-        result = apply_k_anonymity(records, group_keys=["geo_id"], k_min=5)
+        result = apply_k_anonymity(records, k_min=5)
         assert result[0]["suppressed"] is True
         assert result[0]["suppression_reason"] == "k_min"
         assert result[0]["total_payments"] is None
@@ -96,7 +96,7 @@ class TestKAnonymity:
         records = [
             {"geo_id": "b", "n_physicians": 10, "total_payments": 5000, "median_payments": 500, "pct_change_yoy": 0.2},
         ]
-        result = apply_k_anonymity(records, group_keys=["geo_id"], k_min=5)
+        result = apply_k_anonymity(records, k_min=5)
         assert result[0].get("suppressed", False) is False
         assert result[0]["total_payments"] == 5000
 

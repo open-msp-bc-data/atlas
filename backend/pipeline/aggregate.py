@@ -6,7 +6,7 @@ import statistics
 from collections import defaultdict
 from typing import Any
 
-from ..app.privacy import apply_k_anonymity, apply_dominance_suppression, get_privacy_config
+from app.privacy import apply_k_anonymity, apply_dominance_suppression
 
 
 def compute_aggregations(
@@ -59,7 +59,7 @@ def compute_aggregations(
         agg_cells.append(cell)
 
     # Apply privacy rules
-    agg_cells = apply_k_anonymity(agg_cells, group_keys=["geo_id", "specialty_group"])
+    agg_cells = apply_k_anonymity(agg_cells)
     agg_cells = apply_dominance_suppression(agg_cells)
 
     # Remove internal-only fields

@@ -71,7 +71,7 @@ class Aggregation(Base):
     geo_name = Column(String, nullable=False)
     specialty_group = Column(String, nullable=True)
     n_physicians = Column(Integer, nullable=False)
-    total_payments = Column(Float, nullable=False)
+    total_payments = Column(Float, nullable=True)
     median_payments = Column(Float, nullable=True)
     pct_change_yoy = Column(Float, nullable=True)
     suppressed = Column(Boolean, default=False)

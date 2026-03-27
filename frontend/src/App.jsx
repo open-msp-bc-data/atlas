@@ -33,6 +33,7 @@ function App() {
       if (filters.specialty) params.specialty = filters.specialty;
       if (filters.city) params.city = filters.city;
       if (filters.health_authority) params.health_authority = filters.health_authority;
+      if (filters.year) params.year = filters.year;
 
       const [physData, aggData, heatData] = await Promise.all([
         fetchPhysicians({ ...params, limit: 500 }),

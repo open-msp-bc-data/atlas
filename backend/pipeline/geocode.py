@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import time
 from typing import Any
 
 try:
@@ -107,7 +106,7 @@ def geocode_address(address: str, city: str | None = None) -> dict[str, Any]:
     Falls back to a city centroid if the geocoder fails or confidence is low.
 
     Returns:
-        dict with keys: lat, lon, confidence, provider, health_authority
+        dict with keys: lat, lng, confidence, provider, health_authority
     """
     # Try Nominatim first
     result = _nominatim_geocode(address)
@@ -120,7 +119,7 @@ def geocode_address(address: str, city: str | None = None) -> dict[str, Any]:
     if city:
         return _city_centroid_fallback(city)
 
-    return {"lat": None, "lon": None, "confidence": 0, "provider": "none", "health_authority": None}
+    return {"lat": None, "lng": None, "confidence": 0, "provider": "none", "health_authority": None}
 
 
 def _nominatim_geocode(address: str) -> dict[str, Any] | None:
@@ -141,7 +140,7 @@ def _nominatim_geocode(address: str) -> dict[str, Any] | None:
             hit = data[0]
             return {
                 "lat": float(hit["lat"]),
-                "lon": float(hit["lon"]),
+                "lng": float(hit["lon"]),
                 "confidence": float(hit.get("importance", 0.5)),
                 "provider": "nominatim",
             }
@@ -158,12 +157,12 @@ def _city_centroid_fallback(city: str) -> dict[str, Any]:
     if coords:
         return {
             "lat": coords[0],
-            "lon": coords[1],
+            "lng": coords[1],
             "confidence": 0.4,
             "provider": "city_centroid",
             "health_authority": ha,
         }
-    return {"lat": None, "lon": None, "confidence": 0, "provider": "none", "health_authority": ha}
+    return {"lat": None, "lng": None, "confidence": 0, "provider": "none", "health_authority": ha}
 
 
 def _lookup_health_authority(city: str | None) -> str | None:

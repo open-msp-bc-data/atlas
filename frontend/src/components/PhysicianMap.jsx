@@ -151,7 +151,7 @@ export default function PhysicianMap({
     }
 
     if (showHeatmap && heatmapData.length > 0 && L.heatLayer) {
-      const maxIntensity = Math.max(...heatmapData.map((p) => p.intensity));
+      const maxIntensity = Math.max(...heatmapData.map((p) => p.intensity), 1);
       const points = heatmapData.map((p) => [
         p.lat,
         p.lng,
