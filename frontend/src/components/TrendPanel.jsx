@@ -34,6 +34,7 @@ export default function TrendPanel({ pseudoId, onClose }) {
     if (!pseudoId) return;
     setLoading(true);
     setError(null);
+    setTrend(null);
     fetchTrend(pseudoId)
       .then(setTrend)
       .catch((err) => setError(err.message))
@@ -78,7 +79,7 @@ export default function TrendPanel({ pseudoId, onClose }) {
               />
               <Tooltip
                 formatter={(value, name, props) => [
-                  props.payload.billing_range || `${value}k`,
+                  props.payload.billing_range || (value != null ? `${value}k` : 'N/A'),
                   'Billing',
                 ]}
               />
