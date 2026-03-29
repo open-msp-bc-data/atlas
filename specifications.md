@@ -7,10 +7,11 @@ A fully open-source pipeline and web map that aggregates B.C. MSP payments into 
 - Aggregate annual MSP gross payments into **k-anonymous** cells at **facility, city, and health authority** levels.
 - Provide a public **web map + downloads API** with reproducible ETL.
 - Enable rich filtering (specialty, training, geography, time) and **year-over-year** comparisons.
-- Comply with **Open Government Licence – BC** and site ToS of upstream data providers; publish only aggregate, non-identifying data.
+- Comply with **Open Government Licence – BC** and site ToS of upstream data providers.
+- Serve **privacy-protected individual data** (pseudo IDs, jittered coordinates, billing ranges, generalized specialties) alongside aggregate views, with query-level k-anonymity safeguards.
 
 ### Non-Goals
-- No publication of per-physician values or re-identifiable small cells.
+- No publication of **real names** or **exact payment amounts**. Individual data is served only through privacy-protected fields (pseudo IDs, billing ranges, jittered coordinates, generalized specialties).
 - No real-time updates; cadence is **annual** (optionally quarterly in future).
 - No inference of physician income after expenses; values reflect gross payments reported.
 
@@ -97,15 +98,32 @@ A fully open-source pipeline and web map that aggregates B.C. MSP payments into 
 ## 3) Licensing & Compliance
 - Output license: **Open Government Licence – British Columbia** attribution in README, data package metadata, and site footer.
 - Input terms: Respect robots/ToS; cache minimal, non-sensitive CPSBC fields. No scraping of restricted pages; backoff + user agent.
-- PII posture: Process person-level data **in transient staging only**; publish only **aggregates**.
+- PII posture: Process person-level data **in transient staging only**. Publish **privacy-protected individual records** (pseudo IDs, billing ranges, jittered coordinates) and **aggregates**. No real names, exact amounts, or precise locations in published output.
 
 ## 4) Privacy Model
+
+### 4.1 Individual-Level Protections
+Individual physician records are published with these protections applied:
+- **Pseudo IDs:** Let `entity_key_hash = SHA256(salt + normalized_name + city)` (see §7.3). The published pseudo ID is `PHY-{entity_key_hash[:16]}` and replaces real names. Not reversible without the salt.
+- **Jittered coordinates:** Uniform random offset up to 1.5 km, applied to each physician's base location. Jitter is deterministic per physician by seeding the random number generator from the physician's pseudo ID.
+- **Billing ranges:** Exact amounts replaced with bucketed ranges (e.g., "$100k–$200k").
+- **Generalized specialties:** Subspecialties mapped to broad groups (e.g., "Cardiology" → "Internal Medicine").
+
+### 4.2 Query-Level K-Anonymity
+When the `/physicians` endpoint receives filter parameters, the result set must contain at least `K_MIN_UNIQUE_PHYS` distinct physicians. If a filter combination (e.g., specialty=Cardiology AND city=Prince George) returns fewer than `K_MIN_UNIQUE_PHYS` individuals, the endpoint returns a suppression notice instead of individual records. This prevents narrowing to a single identifiable person via filter combinations.
+
+**Admin bypass:** Authenticated admin requests (valid `X-Admin-Token` header) may pass `?k_anonymity=off` to disable query-level suppression. This is for pipeline validation, debugging, and quality checks. The default is always `on`. The frontend "Include suppressed cells" toggle (Section 9.2) sends the admin token when enabled. Non-admin requests with `k_anonymity=off` are ignored (parameter silently treated as `on`).
+
+### 4.3 Aggregate-Level Suppression
 *K-anonymity rules (configurable):*
-- `K_MIN_UNIQUE_PHYS = 5`  → suppress cell if contributors < 5.
+- `K_MIN_UNIQUE_PHYS = 5`  → suppress aggregate cell if contributors < 5.
 - `DOMINANCE_THRESHOLD = 0.60` → suppress if one contributor ≥ 60% of cell total.
 - `PERCENTILE_TOPCODE = 0.99` → display top-coded values as `"≥ value_99p"` for outliers.
 - Differencing protection: publish YoY deltas *only for cells* that meet k-safety in both years.
 - Suppression labelling: field `suppression_reason ∈ {k_min, dominance, topcode, dual_year_fail}`.
+
+### 4.4 Heatmap Privacy
+Heatmap points are grouped into spatial grid cells (e.g., H3 hexagons or lat/lng rounded to 0.1 degrees). Grid cells with fewer than `K_MIN_UNIQUE_PHYS` physicians are suppressed. Individual physician coordinates are never exposed directly in heatmap output.
 
 ## 5) Data Sources (abstracted interfaces)
 - `msp_bluebook(year) -> payments_raw`  
@@ -400,8 +418,78 @@ build:
 | Legal/ToS drift | Snapshot ToS versions; annual compliance review. |
 
 ### **Acceptance Criteria (MVP)**
-✅ Aggregates for 3 years across HA & city with k-safety applied.  
-✅ `/aggregates` and `/timeseries` APIs return validated totals (±0.5%).  
-✅ Interactive map renders choropleth + tooltips; downloads available.  
-✅ Documentation includes privacy model & data dictionary.  
+✅ Aggregates for 3 years across HA & city with k-safety applied.
+✅ `/aggregates` and `/timeseries` APIs return validated totals (±0.5%).
+✅ Interactive map renders choropleth + tooltips; downloads available.
+✅ Documentation includes privacy model & data dictionary.
 ✅ CI/CD pipeline fully reproducible from raw public sources.
+
+<!-- AUTONOMOUS DECISION LOG -->
+## Decision Audit Trail
+
+| # | Phase | Decision | Principle | Rationale | Rejected |
+|---|-------|----------|-----------|-----------|----------|
+| 1 | CEO | Add per-capita normalization to MVP | P2 (boil lakes) | Touches aggregate.py only, <1 day CC | — |
+| 2 | CEO | Add /download endpoint to MVP | P2 (boil lakes) | ~50 lines FastAPI, in blast radius | — |
+| 3 | CEO | Ship downloadable data artifact before map polish | P6 (action) | Validates demand early | — |
+| 4 | CEO | Add privacy threat model doc | P1 (completeness) | 5 re-identification scenarios | — |
+| 5 | CEO | Publish entity resolution gold set | P2 (boil lakes) | Already creating for eval | — |
+| 6 | CEO | Mode: SELECTIVE EXPANSION | P1+P2 | Completeness without bloat | SCOPE EXPANSION, HOLD SCOPE, SCOPE REDUCTION |
+| 7 | CEO | Add comparison mode (two-year side-by-side) | P2 (boil lakes) | YoY data exists, UI extension | — |
+| 8 | CEO | Observability requirements adequate | P3 (pragmatic) | Spec already covers structured logs, metrics | Over-specifying monitoring |
+| 9 | CEO | Security model sound | P3 (pragmatic) | SHA256, CSP, SRI, read-only API, SBOM | — |
+| 10 | CEO | Test coverage plan adequate | P1 (completeness) | 30+ unit tests + golden test + E2E planned | — |
+| 11 | Design | Map MUST be choropleth, not individual markers | P5 (explicit) + P1 | Individual markers expose locations, conflict with privacy model | Point markers |
+| 12 | Design | Add /metadata endpoint for filter options | P5 (explicit) | Deriving from query results creates circular dependencies | Current approach |
+| 13 | Design | Comparison mode: single map, toggle to YoY choropleth | P3 (pragmatic) | Simpler than side-by-side, works on mobile | Split-screen |
+| 14 | Design | Promise.all → Promise.allSettled for API calls | P5 (explicit) | Partial failure should show partial data | — |
+| 15 | Design | Add interaction state table to plan | P1 (completeness) | Empty, loading, error states all unspecified | — |
+| 16 | Design | Add responsive breakpoints (768px) | P1 (completeness) | No mobile design specified | — |
+| 17 | Design | Add ARIA landmarks and a11y basics | P1 (completeness) | WCAG AA claimed but not designed for | — |
+| 18 | Design | Choropleth color scale: YlGnBu sequential, RdYlGn diverging | P3 (pragmatic) | Colorblind-safe, well-established scales | — |
+| 19 | Design | Add onboarding banner for first-time users | P1 (completeness) | No orientation for new visitors | — |
+| 20 | Design | Suppressed cells shown with hatched pattern + tooltip | P1 (completeness) | Silently hiding suppression undermines credibility | — |
+| 21 | Eng | ~~Remove /physicians, /trends, /heatmap endpoints~~ **OVERRIDDEN:** Keep endpoints, add query-level k-anonymity + heatmap spatial grouping | User override | Privacy model updated: individual data served with protections (pseudo IDs, jitter, ranges) + query-level k-min safeguard | Aggregate-only model |
+| 22 | Eng | Unify hashing: name+city, 16 hex chars minimum | P4 (DRY) + P5 | Two schemes, collision risk at 8 chars | — |
+| 23 | Eng | Implement blocking: last name + first initial + city | P1 (completeness) | O(n*m) → O(n*b), spec already describes this | — |
+| 24 | Eng | Admin token: whitespace strip + min 16 char check | P5 (explicit) | Whitespace token bypass | — |
+| 25 | Eng | Startup check: refuse placeholder salt in production | P5 (explicit) | Comment is not a security control | — |
+| 26 | Eng | Add response caching (in-memory TTL) | P3 (pragmatic) | Data changes annually, no per-request SQLite queries | — |
+| 27 | Eng | Input validation on PDF parser | P5 (explicit) | Name length, amount ceiling, strip non-printable | — |
+| 28 | Eng | Fix suppression reason clobbering | P5 (explicit) | k_min priority over dominance | — |
+| 29 | Eng | Add 12 missing test cases (see test plan) | P1 (completeness) | 43% path coverage → target 90%+ | — |
+| 30 | Eng | pipeline/app coupling acceptable for MVP | P3 (pragmatic) | aggregate.py imports from app.privacy | — |
+
+## Cross-Phase Themes
+
+**Theme: Privacy model vs. implementation gap** — flagged in CEO (premise #2), Design (choropleth vs markers), and Eng (per-physician endpoints). High-confidence signal. The v0.1 spec explicitly permits serving privacy-protected individual-level data alongside aggregates, but the current implementation of the three per-physician endpoints does not yet fully align with the documented privacy model and safeguards. This is the single most important fix.
+
+**Theme: Data validation before publication** — flagged in CEO (reconciliation targets) and Eng (input validation, differencing attacks). The pipeline needs validation gates at every stage.
+
+## NOT in scope (Eng phase)
+- MapLibre GL migration (Phase 2)
+- Vector tile generation with Tippecanoe (Phase 2)
+- Differential privacy (Phase 3)
+- Probabilistic record linkage (Phase 3)
+- PostGIS / DuckDB migration (Phase 2)
+- Multi-province expansion
+
+## What already exists (Eng phase)
+- 30+ unit tests covering core pipeline logic
+- SQLAlchemy ORM with models for all entities
+- FastAPI app with CORS, static serving, health endpoint
+- Config system (YAML + env vars)
+- Seed data generator (150 synthetic physicians)
+
+## GSTACK REVIEW REPORT
+
+| Review | Trigger | Why | Runs | Status | Findings |
+|--------|---------|-----|------|--------|----------|
+| CEO Review | `/plan-ceo-review` | Scope & strategy | 1 | issues_open | 3 unresolved (taste decisions), 0 critical gaps |
+| Design Review | `/plan-design-review` | UI/UX gaps | 1 | issues_open | 3 critical (choropleth, filter sourcing, truncation), 7 high |
+| Eng Review | `/plan-eng-review` | Architecture & tests | 1 | issues_open | 2 critical (privacy endpoints, admin auth), 3 high, 11 total |
+| CEO Voices | `autoplan-voices` | Independent CEO challenge | 1 | clean | subagent-only, 1/6 confirmed |
+| Design Voices | `autoplan-voices` | Independent design review | 1 | clean | subagent-only, 2/7 confirmed |
+| Eng Voices | `autoplan-voices` | Independent eng review | 1 | clean | subagent-only, 1/6 confirmed |
+
+**VERDICT:** APPROVED with 30 auto-decisions, 4 taste decisions accepted as defaults. Critical fix: align per-physician API endpoints (`/physicians`, `/trends`, `/heatmap`) with the documented privacy model and safeguards (Decision #21). Test plan: see the project test plan document in this repository (for example, `docs/test-plan.md`). Design doc: see the project design document in this repository (for example, `docs/design.md`). Next step: `/ship` when ready.
