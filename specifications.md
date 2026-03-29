@@ -104,13 +104,13 @@ A fully open-source pipeline and web map that aggregates B.C. MSP payments into 
 
 ### 4.1 Individual-Level Protections
 Individual physician records are published with these protections applied:
-- **Pseudo IDs:** `PHY-{SHA256(salt:normalized_name:city)[:16]}` replaces real names. Not reversible without the salt.
-- **Jittered coordinates:** Uniform random offset up to `location_jitter_km` (default 1.5 km). Deterministic per physician (seeded).
+- **Pseudo IDs:** Let `entity_key_hash = SHA256(salt + normalized_name + city)` (see §7.3). The published pseudo ID is `PHY-{entity_key_hash[:16]}` and replaces real names. Not reversible without the salt.
+- **Jittered coordinates:** Uniform random offset up to 1.5 km, applied to each physician's base location. Jitter is deterministic per physician by seeding the random number generator from the physician's pseudo ID.
 - **Billing ranges:** Exact amounts replaced with bucketed ranges (e.g., "$100k–$200k").
 - **Generalized specialties:** Subspecialties mapped to broad groups (e.g., "Cardiology" → "Internal Medicine").
 
 ### 4.2 Query-Level K-Anonymity
-When the `/physicians` endpoint receives filter parameters, the result set must contain at least `K_MIN_UNIQUE_PHYS` distinct physicians. If a filter combination (e.g., specialty=Cardiology AND city=Prince George) returns fewer than k individuals, the endpoint returns a suppression notice instead of individual records. This prevents narrowing to a single identifiable person via filter combinations.
+When the `/physicians` endpoint receives filter parameters, the result set must contain at least `K_MIN_UNIQUE_PHYS` distinct physicians. If a filter combination (e.g., specialty=Cardiology AND city=Prince George) returns fewer than `K_MIN_UNIQUE_PHYS` individuals, the endpoint returns a suppression notice instead of individual records. This prevents narrowing to a single identifiable person via filter combinations.
 
 **Admin bypass:** Authenticated admin requests (valid `X-Admin-Token` header) may pass `?k_anonymity=off` to disable query-level suppression. This is for pipeline validation, debugging, and quality checks. The default is always `on`. The frontend "Include suppressed cells" toggle (Section 9.2) sends the admin token when enabled. Non-admin requests with `k_anonymity=off` are ignored (parameter silently treated as `on`).
 
@@ -462,7 +462,7 @@ build:
 
 ## Cross-Phase Themes
 
-**Theme: Privacy model vs. implementation gap** — flagged in CEO (premise #2), Design (choropleth vs markers), and Eng (per-physician endpoints). High-confidence signal. The spec defines aggregate-only publication, but the implementation serves individual-level data through 3 separate endpoints. This is the single most important fix.
+**Theme: Privacy model vs. implementation gap** — flagged in CEO (premise #2), Design (choropleth vs markers), and Eng (per-physician endpoints). High-confidence signal. The v0.1 spec explicitly permits serving privacy-protected individual-level data alongside aggregates, but the current implementation of the three per-physician endpoints does not yet fully align with the documented privacy model and safeguards. This is the single most important fix.
 
 **Theme: Data validation before publication** — flagged in CEO (reconciliation targets) and Eng (input validation, differencing attacks). The pipeline needs validation gates at every stage.
 
@@ -492,4 +492,4 @@ build:
 | Design Voices | `autoplan-voices` | Independent design review | 1 | clean | subagent-only, 2/7 confirmed |
 | Eng Voices | `autoplan-voices` | Independent eng review | 1 | clean | subagent-only, 1/6 confirmed |
 
-**VERDICT:** APPROVED with 30 auto-decisions, 4 taste decisions accepted as defaults. Critical fix: remove per-physician API endpoints. Test plan at `~/.gstack/projects/rsingla92-bc_msp_map/rsingla-master-test-plan-20260326-224500.md`. Design doc at `~/.gstack/projects/rsingla92-bc_msp_map/rsingla-master-design-20260326-222155.md`. Next step: `/ship` when ready.
+**VERDICT:** APPROVED with 30 auto-decisions, 4 taste decisions accepted as defaults. Critical fix: align per-physician API endpoints (`/physicians`, `/trends`, `/heatmap`) with the documented privacy model and safeguards (Decision #21). Test plan: see the project test plan document in this repository (for example, `docs/test-plan.md`). Design doc: see the project design document in this repository (for example, `docs/design.md`). Next step: `/ship` when ready.
