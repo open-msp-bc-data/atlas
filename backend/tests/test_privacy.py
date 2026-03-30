@@ -18,7 +18,7 @@ class TestDeterministicPseudoId:
     def test_format(self):
         pid = deterministic_pseudo_id("Dr. John Smith", salt="test")
         assert pid.startswith("PHY-")
-        assert len(pid) == 12  # PHY- + 8 hex chars
+        assert len(pid) == 20  # PHY- + 16 hex chars
 
     def test_deterministic(self):
         a = deterministic_pseudo_id("Dr. John Smith", salt="test")
@@ -34,6 +34,22 @@ class TestDeterministicPseudoId:
         a = deterministic_pseudo_id("Dr. John Smith", salt="salt1")
         b = deterministic_pseudo_id("Dr. John Smith", salt="salt2")
         assert a != b
+
+    def test_different_cities(self):
+        a = deterministic_pseudo_id("Dr. John Smith", city="Vancouver", salt="test")
+        b = deterministic_pseudo_id("Dr. John Smith", city="Victoria", salt="test")
+        assert a != b
+
+    def test_normalization(self):
+        """Case and whitespace should not affect the output."""
+        a = deterministic_pseudo_id("Dr. JOHN SMITH", city="VANCOUVER", salt="test")
+        b = deterministic_pseudo_id("dr. john smith", city="vancouver", salt="test")
+        assert a == b
+
+    def test_normalization_strips_whitespace(self):
+        a = deterministic_pseudo_id("  Dr. John Smith  ", city=" Vancouver ", salt="test")
+        b = deterministic_pseudo_id("Dr. John Smith", city="Vancouver", salt="test")
+        assert a == b
 
 
 class TestJitterLocation:
@@ -112,6 +128,20 @@ class TestDominanceSuppression:
         records = [{"geo_id": "a", "max_share": 0.3, "total_payments": 1000, "median_payments": 500}]
         result = apply_dominance_suppression(records, dominance_threshold=0.6)
         assert result[0].get("suppressed", False) is False
+
+    def test_does_not_overwrite_k_min_suppression(self):
+        """Dominance suppression should not overwrite prior k_min suppression."""
+        records = [{
+            "geo_id": "a",
+            "max_share": 0.8,
+            "total_payments": None,
+            "median_payments": None,
+            "suppressed": True,
+            "suppression_reason": "k_min",
+        }]
+        result = apply_dominance_suppression(records, dominance_threshold=0.6)
+        assert result[0]["suppressed"] is True
+        assert result[0]["suppression_reason"] == "k_min"  # preserved, not overwritten
 
 
 class TestBillingRange:

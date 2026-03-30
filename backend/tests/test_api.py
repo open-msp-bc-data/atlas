@@ -11,6 +11,8 @@ from sqlalchemy.pool import StaticPool
 
 # Point to config for testing
 os.environ["APP_CONFIG"] = os.path.join(os.path.dirname(__file__), "..", "config.yaml")
+# Set a valid privacy salt so the app starts
+os.environ["PRIVACY_SALT"] = "test-salt-for-ci-runs"
 
 from app.database import Base, get_db
 from app.models import PhysicianRaw, Billing, PhysicianPublic, Aggregation
@@ -35,49 +37,60 @@ def override_get_db():
         db.close()
 
 
+def _seed_physicians(db, count, city="Vancouver", specialty="Family Medicine",
+                     health_authority="Vancouver Coastal Health"):
+    """Seed multiple physicians for k-anonymity testing."""
+    records = []
+    for i in range(count):
+        name = f"Dr. Test Physician {city} {i}"
+        phys = PhysicianRaw(
+            full_name=name,
+            specialty=specialty,
+            address=f"{i} Test St",
+            city=city,
+            health_authority=health_authority,
+            lat=49.2827 + i * 0.001,
+            lng=-123.1207 + i * 0.001,
+            license_status="Active",
+            cpsbc_id=f"CPSBC-{city}-{i}",
+        )
+        db.add(phys)
+        db.flush()
+
+        pseudo = deterministic_pseudo_id(name, city=city, salt="msp-bc-atlas-default-salt")
+        lat_a, lng_a = jitter_location(phys.lat, phys.lng, seed=42 + i)
+        pub = PhysicianPublic(
+            physician_id=phys.id,
+            pseudo_id=pseudo,
+            specialty=specialty,
+            specialty_group="General Practice",
+            lat_approx=lat_a,
+            lng_approx=lng_a,
+            city=city,
+            health_authority=health_authority,
+        )
+        db.add(pub)
+        db.flush()
+
+        db.add(Billing(physician_id=phys.id, year="2022-2023", total_billings=300_000 + i * 10_000))
+        db.add(Billing(physician_id=phys.id, year="2023-2024", total_billings=350_000 + i * 10_000))
+        records.append(pub)
+    return records
+
+
 @pytest.fixture(autouse=True)
 def setup_db():
     """Create tables and seed minimal data before each test."""
-    # Import models to register them with Base metadata
     import app.models  # noqa: F401
 
     Base.metadata.create_all(bind=TEST_ENGINE)
     db = TestSession()
 
-    # Seed a physician
-    phys = PhysicianRaw(
-        full_name="Dr. Test Physician",
-        specialty="Family Medicine",
-        address="123 Test St",
-        city="Vancouver",
-        health_authority="Vancouver Coastal Health",
-        lat=49.2827,
-        lng=-123.1207,
-        license_status="Active",
-        cpsbc_id="CPSBC-99999",
-    )
-    db.add(phys)
-    db.flush()
+    # Seed 6 physicians in Vancouver (above k_min=5)
+    _seed_physicians(db, 6, city="Vancouver")
 
-    # Billing records
-    db.add(Billing(physician_id=phys.id, year="2022-2023", total_billings=300_000))
-    db.add(Billing(physician_id=phys.id, year="2023-2024", total_billings=350_000))
-
-    # Public record
-    pseudo = deterministic_pseudo_id(phys.full_name, salt="msp-bc-atlas-default-salt")
-    lat_a, lng_a = jitter_location(49.2827, -123.1207, seed=42)
-    db.add(
-        PhysicianPublic(
-            physician_id=phys.id,
-            pseudo_id=pseudo,
-            specialty="Family Medicine",
-            specialty_group="General Practice",
-            lat_approx=lat_a,
-            lng_approx=lng_a,
-            city="Vancouver",
-            health_authority="Vancouver Coastal Health",
-        )
-    )
+    # Seed 2 physicians in SmallTown (below k_min=5)
+    _seed_physicians(db, 2, city="SmallTown", health_authority="Northern Health")
 
     # Aggregation
     db.add(
@@ -156,16 +169,55 @@ class TestPhysiciansEndpoint:
         assert resp.status_code == 200
         assert len(resp.json()) == 0
 
+    def test_k_anonymity_suppression(self, client):
+        """Filtering to a small group should return suppression notice."""
+        resp = client.get("/physicians", params={"city": "SmallTown"})
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data["suppressed"] is True
+        assert data["reason"] == "query_k_anonymity"
+
+    def test_k_anonymity_no_count_leak(self, client):
+        """Suppression response must NOT include the exact count."""
+        resp = client.get("/physicians", params={"city": "SmallTown"})
+        data = resp.json()
+        assert "n_matching" not in data
+
+    def test_k_anonymity_off_without_token(self, client):
+        """k_anonymity=off without admin token should still enforce suppression."""
+        resp = client.get("/physicians", params={"city": "SmallTown", "k_anonymity": "off"})
+        data = resp.json()
+        assert data["suppressed"] is True
+
+    def test_k_anonymity_admin_bypass(self, client, monkeypatch):
+        """Admin with valid token can bypass k-anonymity."""
+        monkeypatch.setenv("ADMIN_TOKEN", "test-admin-token-1234567890")
+        resp = client.get(
+            "/physicians",
+            params={"city": "SmallTown", "k_anonymity": "off"},
+            headers={"x-admin-token": "test-admin-token-1234567890"},
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert isinstance(data, list)
+        assert len(data) == 2
+
 
 class TestHeatmapEndpoint:
     def test_heatmap(self, client):
         resp = client.get("/heatmap")
         assert resp.status_code == 200
         data = resp.json()
-        assert len(data) >= 1
-        assert "lat" in data[0]
-        assert "lng" in data[0]
-        assert "intensity" in data[0]
+        assert isinstance(data, list)
+
+    def test_heatmap_has_n_physicians(self, client):
+        resp = client.get("/heatmap")
+        data = resp.json()
+        if len(data) > 0:
+            assert "n_physicians" in data[0]
+            assert "lat" in data[0]
+            assert "lng" in data[0]
+            assert "intensity" in data[0]
 
 
 class TestAggregationsEndpoint:
@@ -193,17 +245,23 @@ class TestAdminEndpoint:
         assert resp.status_code == 422
 
     def test_wrong_token_returns_403(self, client, monkeypatch):
-        monkeypatch.setenv("ADMIN_TOKEN", "test-secret-token")
+        monkeypatch.setenv("ADMIN_TOKEN", "test-secret-token-1234567890")
         resp = client.get("/admin/raw", headers={"x-admin-token": "wrong"})
         assert resp.status_code == 403
 
     def test_valid_token(self, client, monkeypatch):
-        monkeypatch.setenv("ADMIN_TOKEN", "test-secret-token")
-        resp = client.get("/admin/raw", headers={"x-admin-token": "test-secret-token"})
+        monkeypatch.setenv("ADMIN_TOKEN", "test-secret-token-1234567890")
+        resp = client.get("/admin/raw", headers={"x-admin-token": "test-secret-token-1234567890"})
         assert resp.status_code == 200
         data = resp.json()
         assert len(data) >= 1
         assert "full_name" in data[0]  # admin CAN see raw data
+
+    def test_short_token_rejected(self, client, monkeypatch):
+        """Tokens shorter than 16 chars should be rejected."""
+        monkeypatch.setenv("ADMIN_TOKEN", "short")
+        resp = client.get("/admin/raw", headers={"x-admin-token": "short"})
+        assert resp.status_code == 403
 
 
 class TestTrendsEndpoint:

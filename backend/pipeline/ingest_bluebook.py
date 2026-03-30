@@ -33,14 +33,6 @@ _ENTRY_RE = re.compile(
     r"([\d,]+\.\d{2})"                # amount (digits with commas, 2 decimal places)
 )
 
-# Detect section headers
-_SECTION_HEADERS = (
-    "PAYMENTS TO PRACTITIONERS",
-    "PAYMENTS TO ORGANIZATIONS",
-    "OTHER ACCOUNTS",
-)
-
-
 def parse_bluebook_pdf(path: str | Path) -> list[dict[str, Any]]:
     """Extract physician/org billing rows from a Blue Book PDF.
 

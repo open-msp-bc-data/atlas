@@ -36,6 +36,14 @@ app.include_router(admin.router)
 @app.on_event("startup")
 def on_startup():
     init_db()
+    # Fail fast if the privacy salt is still the default placeholder
+    from .config import get_privacy_config
+    salt = os.environ.get("PRIVACY_SALT") or get_privacy_config().get("salt", "")
+    if salt in ("", "CHANGE_ME_IN_PRODUCTION"):
+        raise RuntimeError(
+            "Privacy salt is not configured. Set PRIVACY_SALT env var or update "
+            "privacy.salt in config.yaml before running in production."
+        )
 
 
 @app.get("/health")

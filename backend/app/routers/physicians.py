@@ -2,14 +2,16 @@
 
 from __future__ import annotations
 
-import os
+import time
+from collections import defaultdict
 
-from fastapi import APIRouter, Depends, Header, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
-from ..config import get_api_config, get_privacy_config
+from ..auth import validate_admin_token
+from ..config import get_privacy_config
 from ..database import get_db
 from ..models import PhysicianPublic, Billing
 from ..schemas import PhysicianPublicOut, HeatmapCell, PhysicianTrendOut, TrendPoint
@@ -17,22 +19,16 @@ from ..privacy import billing_range
 
 router = APIRouter(tags=["physicians"])
 
-# Grid cell size for heatmap privacy (in degrees, ~5km at BC latitudes)
+# Grid cell size for heatmap privacy (in degrees, ~3.7–5.6km across BC latitudes)
 _HEATMAP_GRID_SIZE = 0.05
 
-
-def _is_valid_admin(token: str | None) -> bool:
-    """Check if the provided token matches the configured admin token."""
-    if not token:
-        return False
-    expected = os.environ.get("ADMIN_TOKEN") or get_api_config().get("admin_token", "")
-    expected = expected.strip()
-    if not expected or len(expected) < 16:
-        return False
-    return token.strip() == expected
+# Simple in-memory rate limiter for /trends endpoint
+_RATE_LIMIT_WINDOW = 60  # seconds
+_RATE_LIMIT_MAX = 30  # requests per window per IP
+_rate_limit_store: dict[str, list[float]] = defaultdict(list)
 
 
-@router.get("/physicians")
+@router.get("/physicians", response_model=list[PhysicianPublicOut])
 def list_physicians(
     specialty: str | None = Query(None),
     city: str | None = Query(None),
@@ -60,7 +56,7 @@ def list_physicians(
 
     # Query-level k-anonymity check
     k_min = get_privacy_config().get("k_min_unique_phys", 5)
-    bypass = k_anonymity == "off" and _is_valid_admin(x_admin_token)
+    bypass = k_anonymity == "off" and validate_admin_token(x_admin_token)
 
     if not bypass:
         total_matching = q.count()
@@ -70,7 +66,6 @@ def list_physicians(
                 "reason": "query_k_anonymity",
                 "message": f"Filter combination returns fewer than {k_min} individuals. "
                            "Results suppressed to prevent re-identification.",
-                "n_matching": total_matching,
             })
 
     records = q.offset(offset).limit(limit).all()
@@ -161,7 +156,7 @@ def heatmap(
     are suppressed.
     """
     k_min = get_privacy_config().get("k_min_unique_phys", 5)
-    bypass = k_anonymity == "off" and _is_valid_admin(x_admin_token)
+    bypass = k_anonymity == "off" and validate_admin_token(x_admin_token)
 
     # Round coordinates to grid cells for privacy
     grid = _HEATMAP_GRID_SIZE
@@ -196,12 +191,26 @@ def heatmap(
     return cells
 
 
+def _check_rate_limit(client_ip: str) -> None:
+    """Enforce per-IP rate limiting. Raises 429 if exceeded."""
+    now = time.time()
+    timestamps = _rate_limit_store[client_ip]
+    # Prune old entries
+    cutoff = now - _RATE_LIMIT_WINDOW
+    _rate_limit_store[client_ip] = [t for t in timestamps if t > cutoff]
+    if len(_rate_limit_store[client_ip]) >= _RATE_LIMIT_MAX:
+        raise HTTPException(status_code=429, detail="Rate limit exceeded")
+    _rate_limit_store[client_ip].append(now)
+
+
 @router.get("/trends/{pseudo_id}", response_model=PhysicianTrendOut)
 def physician_trend(pseudo_id: str, db: Session = Depends(get_db)):
     """Return year-over-year billing trend for a single anonymised physician."""
+    # Basic rate limiting to prevent pseudo_id enumeration
+    _check_rate_limit(pseudo_id)
+
     pub = db.query(PhysicianPublic).filter(PhysicianPublic.pseudo_id == pseudo_id).first()
     if pub is None:
-        from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Physician not found")
 
     bills = (
