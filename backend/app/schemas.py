@@ -51,11 +51,12 @@ class PhysicianTrendOut(BaseModel):
     data: list[TrendPoint] = []
 
 
-# ── Heatmap point ─────────────────────────────────────────────────────
-class HeatmapPoint(BaseModel):
+# ── Heatmap cell (spatially aggregated) ──────────────────────────────
+class HeatmapCell(BaseModel):
     lat: float
     lng: float
     intensity: float
+    n_physicians: int
 
 
 # ── Admin raw physician ───────────────────────────────────────────────
