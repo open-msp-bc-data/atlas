@@ -2,29 +2,54 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Query
+import os
+
+from fastapi import APIRouter, Depends, Header, Query
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
+from ..config import get_api_config, get_privacy_config
 from ..database import get_db
 from ..models import PhysicianPublic, Billing
-from ..schemas import PhysicianPublicOut, HeatmapPoint, PhysicianTrendOut, TrendPoint
+from ..schemas import PhysicianPublicOut, HeatmapCell, PhysicianTrendOut, TrendPoint
 from ..privacy import billing_range
 
 router = APIRouter(tags=["physicians"])
 
+# Grid cell size for heatmap privacy (in degrees, ~5km at BC latitudes)
+_HEATMAP_GRID_SIZE = 0.05
 
-@router.get("/physicians", response_model=list[PhysicianPublicOut])
+
+def _is_valid_admin(token: str | None) -> bool:
+    """Check if the provided token matches the configured admin token."""
+    if not token:
+        return False
+    expected = os.environ.get("ADMIN_TOKEN") or get_api_config().get("admin_token", "")
+    expected = expected.strip()
+    if not expected or len(expected) < 16:
+        return False
+    return token.strip() == expected
+
+
+@router.get("/physicians")
 def list_physicians(
     specialty: str | None = Query(None),
     city: str | None = Query(None),
     health_authority: str | None = Query(None),
     year: str | None = Query(None, description="Fiscal year for billing range/YoY (e.g. 2023-2024)"),
+    k_anonymity: str = Query("on", description="Set to 'off' with admin token to bypass query-level k-anonymity"),
     limit: int = Query(200, le=1000),
     offset: int = Query(0, ge=0),
+    x_admin_token: str | None = Header(None),
     db: Session = Depends(get_db),
 ):
-    """Return anonymised physician records for public map display."""
+    """Return anonymised physician records for public map display.
+
+    Query-level k-anonymity: if the filter combination returns fewer than
+    k_min distinct physicians, a suppression notice is returned instead of
+    individual records. Admin users can bypass this with a valid token.
+    """
     q = db.query(PhysicianPublic)
     if specialty:
         q = q.filter(PhysicianPublic.specialty_group == specialty)
@@ -32,6 +57,21 @@ def list_physicians(
         q = q.filter(PhysicianPublic.city == city)
     if health_authority:
         q = q.filter(PhysicianPublic.health_authority == health_authority)
+
+    # Query-level k-anonymity check
+    k_min = get_privacy_config().get("k_min_unique_phys", 5)
+    bypass = k_anonymity == "off" and _is_valid_admin(x_admin_token)
+
+    if not bypass:
+        total_matching = q.count()
+        if total_matching < k_min and total_matching > 0:
+            return JSONResponse(content={
+                "suppressed": True,
+                "reason": "query_k_anonymity",
+                "message": f"Filter combination returns fewer than {k_min} individuals. "
+                           "Results suppressed to prevent re-identification.",
+                "n_matching": total_matching,
+            })
 
     records = q.offset(offset).limit(limit).all()
 
@@ -107,16 +147,32 @@ def list_physicians(
     return results
 
 
-@router.get("/heatmap", response_model=list[HeatmapPoint])
+@router.get("/heatmap", response_model=list[HeatmapCell])
 def heatmap(
     year: str | None = Query(None),
+    k_anonymity: str = Query("on"),
+    x_admin_token: str | None = Header(None),
     db: Session = Depends(get_db),
 ):
-    """Return approximate physician locations weighted by billing for heatmap rendering."""
+    """Return spatially-grouped billing intensity for heatmap rendering.
+
+    Points are grouped into ~5km grid cells to prevent individual physician
+    locations from being inferred. Grid cells with fewer than k_min physicians
+    are suppressed.
+    """
+    k_min = get_privacy_config().get("k_min_unique_phys", 5)
+    bypass = k_anonymity == "off" and _is_valid_admin(x_admin_token)
+
+    # Round coordinates to grid cells for privacy
+    grid = _HEATMAP_GRID_SIZE
+    lat_cell = func.round(PhysicianPublic.lat_approx / grid) * grid
+    lng_cell = func.round(PhysicianPublic.lng_approx / grid) * grid
+
     q = db.query(
-        PhysicianPublic.lat_approx,
-        PhysicianPublic.lng_approx,
+        lat_cell.label("lat"),
+        lng_cell.label("lng"),
         func.sum(Billing.total_billings).label("intensity"),
+        func.count(func.distinct(PhysicianPublic.id)).label("n_physicians"),
     ).join(Billing, Billing.physician_id == PhysicianPublic.physician_id)
 
     if year:
@@ -125,12 +181,19 @@ def heatmap(
     q = q.filter(
         PhysicianPublic.lat_approx.isnot(None),
         PhysicianPublic.lng_approx.isnot(None),
-    ).group_by(PhysicianPublic.id)
+    ).group_by(lat_cell, lng_cell)
 
-    return [
-        HeatmapPoint(lat=row.lat_approx, lng=row.lng_approx, intensity=row.intensity)
-        for row in q.all()
-    ]
+    cells = []
+    for row in q.all():
+        if not bypass and row.n_physicians < k_min:
+            continue
+        cells.append(HeatmapCell(
+            lat=row.lat,
+            lng=row.lng,
+            intensity=row.intensity,
+            n_physicians=row.n_physicians,
+        ))
+    return cells
 
 
 @router.get("/trends/{pseudo_id}", response_model=PhysicianTrendOut)
