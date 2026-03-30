@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import math
+import os
 import random
 from typing import Any
 
@@ -19,7 +20,7 @@ def deterministic_pseudo_id(
     physicians per year. Returns a string like ``PHY-A1B2C3D4E5F6G7H8``.
     """
     if salt is None:
-        salt = get_privacy_config().get("salt", "")
+        salt = os.environ.get("PRIVACY_SALT") or get_privacy_config().get("salt", "")
     # Normalize inputs for consistency
     name_norm = full_name.strip().lower()
     city_norm = city.strip().lower() if city else ""

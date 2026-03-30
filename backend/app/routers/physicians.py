@@ -191,22 +191,28 @@ def heatmap(
     return cells
 
 
-def _check_rate_limit(client_ip: str) -> None:
-    """Enforce per-IP rate limiting. Raises 429 if exceeded."""
+def _check_rate_limit(key: str) -> None:
+    """Enforce per-key rate limiting. Raises 429 if exceeded."""
     now = time.time()
-    timestamps = _rate_limit_store[client_ip]
-    # Prune old entries
     cutoff = now - _RATE_LIMIT_WINDOW
-    _rate_limit_store[client_ip] = [t for t in timestamps if t > cutoff]
-    if len(_rate_limit_store[client_ip]) >= _RATE_LIMIT_MAX:
+    # Prune old entries for this key
+    _rate_limit_store[key] = [t for t in _rate_limit_store[key] if t > cutoff]
+    if len(_rate_limit_store[key]) >= _RATE_LIMIT_MAX:
         raise HTTPException(status_code=429, detail="Rate limit exceeded")
-    _rate_limit_store[client_ip].append(now)
+    _rate_limit_store[key].append(now)
+    # Evict stale keys periodically to prevent unbounded memory growth
+    if len(_rate_limit_store) > 10_000:
+        stale = [k for k, v in _rate_limit_store.items() if not v or v[-1] < cutoff]
+        for k in stale:
+            del _rate_limit_store[k]
 
 
 @router.get("/trends/{pseudo_id}", response_model=PhysicianTrendOut)
 def physician_trend(pseudo_id: str, db: Session = Depends(get_db)):
     """Return year-over-year billing trend for a single anonymised physician."""
-    # Basic rate limiting to prevent pseudo_id enumeration
+    # Rate limit by pseudo_id to prevent rapid enumeration of individual records.
+    # Per-IP limiting would require Request dependency; pseudo_id limiting caps
+    # how fast any single record can be probed.
     _check_rate_limit(pseudo_id)
 
     pub = db.query(PhysicianPublic).filter(PhysicianPublic.pseudo_id == pseudo_id).first()
