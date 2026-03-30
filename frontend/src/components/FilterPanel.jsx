@@ -8,7 +8,7 @@ export default function FilterPanel({
 }) {
   return (
     <div className="filter-panel">
-      <h3>🔍 Filters</h3>
+      <h3>Filters</h3>
 
       <div className="filter-group">
         <label htmlFor="year-select">Fiscal Year</label>

@@ -54,18 +54,18 @@ export default function TrendPanel({ pseudoId, onClose }) {
   return (
     <div className="trend-panel">
       <h3>
-        📈 Trend: {pseudoId}
+        Trend: {pseudoId}
         <button className="close-btn" onClick={onClose} aria-label="Close trend panel">
           ✕
         </button>
       </h3>
 
       {loading && <p>Loading trend data…</p>}
-      {error && <p style={{ color: '#d93025' }}>Error: {error}</p>}
+      {error && <p style={{ color: '#C4122F' }}>Error: {error}</p>}
 
       {trend && chartData.length > 0 && (
         <>
-          <p style={{ fontSize: '0.8rem', color: '#666', marginBottom: '0.5rem' }}>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
             Specialty: {trend.specialty_group || 'Unknown'}
           </p>
           <ResponsiveContainer width="100%" height={150}>
@@ -83,7 +83,7 @@ export default function TrendPanel({ pseudoId, onClose }) {
                   'Billing',
                 ]}
               />
-              <Bar dataKey="midpoint" fill="#1a73e8" radius={[4, 4, 0, 0]} name="Billing" />
+              <Bar dataKey="midpoint" fill="#C4122F" radius={0} name="Billing" />
             </BarChart>
           </ResponsiveContainer>
 
@@ -98,7 +98,7 @@ export default function TrendPanel({ pseudoId, onClose }) {
       )}
 
       {trend && chartData.length === 0 && (
-        <p style={{ fontSize: '0.85rem', color: '#666' }}>No trend data available.</p>
+        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>No trend data available.</p>
       )}
     </div>
   );
