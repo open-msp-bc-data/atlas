@@ -4,20 +4,27 @@ from __future__ import annotations
 
 import hashlib
 import math
+import os
 import random
 from typing import Any
 
 from .config import get_privacy_config
 
 
-def deterministic_pseudo_id(full_name: str, salt: str | None = None) -> str:
-    """Generate a deterministic anonymised identifier from a physician name.
+def deterministic_pseudo_id(
+    full_name: str, city: str = "", salt: str | None = None
+) -> str:
+    """Generate a deterministic anonymised identifier from a physician name and city.
 
-    Returns a string like ``PHY-A1B2C3D4``.
+    Uses 16 hex characters (64 bits) for collision resistance across ~150k
+    physicians per year. Returns a string like ``PHY-A1B2C3D4E5F6G7H8``.
     """
     if salt is None:
-        salt = get_privacy_config().get("salt", "")
-    digest = hashlib.sha256(f"{salt}:{full_name}".encode()).hexdigest()[:8].upper()
+        salt = os.environ.get("PRIVACY_SALT") or get_privacy_config().get("salt", "")
+    # Normalize inputs for consistency
+    name_norm = full_name.strip().lower()
+    city_norm = city.strip().lower() if city else ""
+    digest = hashlib.sha256(f"{salt}:{name_norm}:{city_norm}".encode()).hexdigest()[:16].upper()
     return f"PHY-{digest}"
 
 
@@ -131,10 +138,12 @@ def apply_dominance_suppression(
     for rec in records:
         rec = dict(rec)
         if rec.get("max_share", 0) >= dominance_threshold:
-            rec["suppressed"] = True
-            rec["suppression_reason"] = "dominance"
-            rec["total_payments"] = None
-            rec["median_payments"] = None
+            # Don't overwrite k_min suppression (k_min is higher priority)
+            if not rec.get("suppressed"):
+                rec["suppressed"] = True
+                rec["suppression_reason"] = "dominance"
+                rec["total_payments"] = None
+                rec["median_payments"] = None
         result.append(rec)
     return result
 

@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
+import re
 import pytest
 
 from pipeline.entity_resolution import normalize_name, build_entity_key, match_payee_to_registrants, resolve_entities
 from pipeline.geocode import geocode_address, _city_centroid_fallback, _lookup_health_authority, BC_CITY_CENTROIDS
-from pipeline.ingest_bluebook import extract_fiscal_year, _parse_row
+from pipeline.ingest_bluebook import extract_fiscal_year, _ENTRY_RE, _clean_name
 from pipeline.aggregate import compute_aggregations, compute_yoy
 
 
@@ -103,27 +104,55 @@ class TestGeocoding:
 
 
 class TestBluebookParser:
-    def test_extract_fiscal_year(self):
+    def test_extract_fiscal_year_4plus4(self):
         assert extract_fiscal_year("bluebook-2022-2023.pdf") == "2022-2023"
         assert extract_fiscal_year("MSP_2021_2022.pdf") == "2021-2022"
+
+    def test_extract_fiscal_year_4plus2(self):
+        assert extract_fiscal_year("bluebook_2023-24.pdf") == "2023-2024"
+        assert extract_fiscal_year("blue-book-2018-19.pdf") == "2018-2019"
+        assert extract_fiscal_year("bluebook_2020_21_final.pdf") == "2020-2021"
+
+    def test_extract_fiscal_year_single(self):
+        assert extract_fiscal_year("bluebook2012.pdf") == "2011-2012"
+
+    def test_extract_fiscal_year_none(self):
         assert extract_fiscal_year("randomfile.pdf") is None
 
-    def test_parse_row_valid(self):
-        row = ["Dr. John Smith", "Family Medicine", "$350,000.00"]
-        result = _parse_row(row, 0)
-        assert result is not None
-        assert result["payee_name"] == "Dr. John Smith"
-        assert result["amount_gross"] == 350_000.00
+    def test_entry_regex_matches_standard(self):
+        text = "Smith, John .......................... 123,456.78"
+        m = _ENTRY_RE.search(text)
+        assert m is not None
+        assert "Smith" in m.group(1)
+        assert m.group(2) == "123,456.78"
 
-    def test_parse_row_header(self):
-        row = ["PAYEE NAME", "CATEGORY", "AMOUNT"]
-        result = _parse_row(row, 0)
-        assert result is None
+    def test_entry_regex_matches_simple_name(self):
+        text = "Doe, Jane .... 50,000.00"
+        m = _ENTRY_RE.search(text)
+        assert m is not None
+        assert m.group(2) == "50,000.00"
 
-    def test_parse_row_no_amount(self):
-        row = ["Dr. John Smith", "No amount here"]
-        result = _parse_row(row, 0)
-        assert result is None
+    def test_entry_regex_no_match_header(self):
+        text = "PAYMENTS TO PRACTITIONERS"
+        m = _ENTRY_RE.search(text)
+        assert m is None
+
+    def test_entry_regex_no_match_plain_text(self):
+        text = "This is a paragraph about physician payments."
+        m = _ENTRY_RE.search(text)
+        assert m is None
+
+    def test_clean_name_trailing_dots(self):
+        assert _clean_name("Smith, John...") == "Smith, John"
+
+    def test_clean_name_multiple_spaces(self):
+        assert _clean_name("Smith,   John") == "Smith, John"
+
+    def test_clean_name_trailing_comma(self):
+        assert _clean_name("Smith, John,") == "Smith, John"
+
+    def test_clean_name_whitespace(self):
+        assert _clean_name("  Smith, John  ") == "Smith, John"
 
 
 class TestComputeAggregations:

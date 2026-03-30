@@ -69,9 +69,9 @@ function App() {
   return (
     <div className="app">
       <header className="app-header">
-        <h1>🗺️ MSP-BC Open Atlas</h1>
+        <h1>MSP-BC Open Atlas<span className="accent-bar" /></h1>
         <p className="subtitle">
-          Privacy-safe geospatial analysis of physician billing in British Columbia
+          Privacy-safe physician billing data for British Columbia
         </p>
       </header>
 
@@ -104,7 +104,7 @@ function App() {
           </div>
 
           <div className="sidebar-section privacy-notice">
-            <h3>⚠️ Privacy Notice</h3>
+            <h3>Privacy Notice</h3>
             <p>
               All data is anonymised. Locations are approximate (±1.5 km jitter).
               Physician names are replaced with pseudonymous IDs. Groups with fewer

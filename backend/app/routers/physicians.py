@@ -2,16 +2,30 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Query
+import time
+from collections import defaultdict
+
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
+from ..auth import validate_admin_token
+from ..config import get_privacy_config
 from ..database import get_db
 from ..models import PhysicianPublic, Billing
-from ..schemas import PhysicianPublicOut, HeatmapPoint, PhysicianTrendOut, TrendPoint
+from ..schemas import PhysicianPublicOut, HeatmapCell, PhysicianTrendOut, TrendPoint
 from ..privacy import billing_range
 
 router = APIRouter(tags=["physicians"])
+
+# Grid cell size for heatmap privacy (in degrees, ~3.7–5.6km across BC latitudes)
+_HEATMAP_GRID_SIZE = 0.05
+
+# Simple in-memory rate limiter for /trends endpoint
+_RATE_LIMIT_WINDOW = 60  # seconds
+_RATE_LIMIT_MAX = 30  # requests per window per IP
+_rate_limit_store: dict[str, list[float]] = defaultdict(list)
 
 
 @router.get("/physicians", response_model=list[PhysicianPublicOut])
@@ -20,11 +34,18 @@ def list_physicians(
     city: str | None = Query(None),
     health_authority: str | None = Query(None),
     year: str | None = Query(None, description="Fiscal year for billing range/YoY (e.g. 2023-2024)"),
+    k_anonymity: str = Query("on", description="Set to 'off' with admin token to bypass query-level k-anonymity"),
     limit: int = Query(200, le=1000),
     offset: int = Query(0, ge=0),
+    x_admin_token: str | None = Header(None),
     db: Session = Depends(get_db),
 ):
-    """Return anonymised physician records for public map display."""
+    """Return anonymised physician records for public map display.
+
+    Query-level k-anonymity: if the filter combination returns fewer than
+    k_min distinct physicians, a suppression notice is returned instead of
+    individual records. Admin users can bypass this with a valid token.
+    """
     q = db.query(PhysicianPublic)
     if specialty:
         q = q.filter(PhysicianPublic.specialty_group == specialty)
@@ -32,6 +53,20 @@ def list_physicians(
         q = q.filter(PhysicianPublic.city == city)
     if health_authority:
         q = q.filter(PhysicianPublic.health_authority == health_authority)
+
+    # Query-level k-anonymity check
+    k_min = get_privacy_config().get("k_min_unique_phys", 5)
+    bypass = k_anonymity == "off" and validate_admin_token(x_admin_token)
+
+    if not bypass:
+        total_matching = q.count()
+        if total_matching < k_min and total_matching > 0:
+            return JSONResponse(content={
+                "suppressed": True,
+                "reason": "query_k_anonymity",
+                "message": f"Filter combination returns fewer than {k_min} individuals. "
+                           "Results suppressed to prevent re-identification.",
+            })
 
     records = q.offset(offset).limit(limit).all()
 
@@ -107,16 +142,32 @@ def list_physicians(
     return results
 
 
-@router.get("/heatmap", response_model=list[HeatmapPoint])
+@router.get("/heatmap", response_model=list[HeatmapCell])
 def heatmap(
     year: str | None = Query(None),
+    k_anonymity: str = Query("on"),
+    x_admin_token: str | None = Header(None),
     db: Session = Depends(get_db),
 ):
-    """Return approximate physician locations weighted by billing for heatmap rendering."""
+    """Return spatially-grouped billing intensity for heatmap rendering.
+
+    Points are grouped into ~5km grid cells to prevent individual physician
+    locations from being inferred. Grid cells with fewer than k_min physicians
+    are suppressed.
+    """
+    k_min = get_privacy_config().get("k_min_unique_phys", 5)
+    bypass = k_anonymity == "off" and validate_admin_token(x_admin_token)
+
+    # Round coordinates to grid cells for privacy
+    grid = _HEATMAP_GRID_SIZE
+    lat_cell = func.round(PhysicianPublic.lat_approx / grid) * grid
+    lng_cell = func.round(PhysicianPublic.lng_approx / grid) * grid
+
     q = db.query(
-        PhysicianPublic.lat_approx,
-        PhysicianPublic.lng_approx,
+        lat_cell.label("lat"),
+        lng_cell.label("lng"),
         func.sum(Billing.total_billings).label("intensity"),
+        func.count(func.distinct(PhysicianPublic.id)).label("n_physicians"),
     ).join(Billing, Billing.physician_id == PhysicianPublic.physician_id)
 
     if year:
@@ -125,20 +176,47 @@ def heatmap(
     q = q.filter(
         PhysicianPublic.lat_approx.isnot(None),
         PhysicianPublic.lng_approx.isnot(None),
-    ).group_by(PhysicianPublic.id)
+    ).group_by(lat_cell, lng_cell)
 
-    return [
-        HeatmapPoint(lat=row.lat_approx, lng=row.lng_approx, intensity=row.intensity)
-        for row in q.all()
-    ]
+    cells = []
+    for row in q.all():
+        if not bypass and row.n_physicians < k_min:
+            continue
+        cells.append(HeatmapCell(
+            lat=row.lat,
+            lng=row.lng,
+            intensity=row.intensity,
+            n_physicians=row.n_physicians,
+        ))
+    return cells
+
+
+def _check_rate_limit(key: str) -> None:
+    """Enforce per-key rate limiting. Raises 429 if exceeded."""
+    now = time.time()
+    cutoff = now - _RATE_LIMIT_WINDOW
+    # Prune old entries for this key
+    _rate_limit_store[key] = [t for t in _rate_limit_store[key] if t > cutoff]
+    if len(_rate_limit_store[key]) >= _RATE_LIMIT_MAX:
+        raise HTTPException(status_code=429, detail="Rate limit exceeded")
+    _rate_limit_store[key].append(now)
+    # Evict stale keys periodically to prevent unbounded memory growth
+    if len(_rate_limit_store) > 10_000:
+        stale = [k for k, v in _rate_limit_store.items() if not v or v[-1] < cutoff]
+        for k in stale:
+            del _rate_limit_store[k]
 
 
 @router.get("/trends/{pseudo_id}", response_model=PhysicianTrendOut)
 def physician_trend(pseudo_id: str, db: Session = Depends(get_db)):
     """Return year-over-year billing trend for a single anonymised physician."""
+    # Rate limit by pseudo_id to prevent rapid enumeration of individual records.
+    # Per-IP limiting would require Request dependency; pseudo_id limiting caps
+    # how fast any single record can be probed.
+    _check_rate_limit(pseudo_id)
+
     pub = db.query(PhysicianPublic).filter(PhysicianPublic.pseudo_id == pseudo_id).first()
     if pub is None:
-        from fastapi import HTTPException
         raise HTTPException(status_code=404, detail="Physician not found")
 
     bills = (

@@ -13,8 +13,8 @@ import {
 } from 'recharts';
 
 const COLORS = [
-  '#1a73e8', '#34a853', '#ea4335', '#fbbc04', '#9c27b0',
-  '#00bcd4', '#ff5722', '#607d8b', '#795548', '#e91e63',
+  '#C4122F', '#8B0D21', '#E86060', '#1B7340', '#2563EB',
+  '#B45309', '#5C0816', '#6B7280', '#F5A3A3', '#D1D1CC',
 ];
 
 function formatCurrency(value) {
@@ -51,7 +51,7 @@ export default function AggregationCharts({ aggregations, year }) {
 
   return (
     <div className="charts-area">
-      <h3>📊 Regional Aggregations — {year}</h3>
+      <h3>Regional Aggregations — {year}</h3>
       <div className="charts-grid">
         {/* Bar chart: Top regions by total billings */}
         <div className="chart-card">
@@ -62,7 +62,7 @@ export default function AggregationCharts({ aggregations, year }) {
               <XAxis type="number" tickFormatter={formatCurrency} />
               <YAxis type="category" dataKey="name" width={75} tick={{ fontSize: 11 }} />
               <Tooltip formatter={(v) => formatCurrency(v)} />
-              <Bar dataKey="total" fill="#1a73e8" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="total" fill="#C4122F" radius={0} />
             </BarChart>
           </ResponsiveContainer>
         </div>

@@ -16,22 +16,22 @@ const BC_ZOOM = 5;
 
 // Specialty → color mapping for markers
 const SPECIALTY_COLORS = {
-  'General Practice': '#4caf50',
-  'Internal Medicine': '#2196f3',
-  Surgery: '#f44336',
-  Pediatrics: '#ff9800',
-  Psychiatry: '#9c27b0',
-  'Emergency Medicine': '#e91e63',
-  Anesthesiology: '#00bcd4',
-  Radiology: '#607d8b',
-  'Obstetrics & Gynecology': '#ff5722',
-  Dermatology: '#795548',
-  Ophthalmology: '#3f51b5',
-  Neurology: '#009688',
-  Pathology: '#8bc34a',
-  'Physical Medicine': '#cddc39',
-  'Other Specialty': '#9e9e9e',
-  Unknown: '#bdbdbd',
+  'General Practice': '#1B7340',
+  'Internal Medicine': '#2563EB',
+  Surgery: '#C4122F',
+  Pediatrics: '#B45309',
+  Psychiatry: '#7C3AED',
+  'Emergency Medicine': '#DC2626',
+  Anesthesiology: '#0891B2',
+  Radiology: '#6B7280',
+  'Obstetrics & Gynecology': '#BE185D',
+  Dermatology: '#92400E',
+  Ophthalmology: '#1D4ED8',
+  Neurology: '#0F766E',
+  Pathology: '#4D7C0F',
+  'Physical Medicine': '#A16207',
+  'Other Specialty': '#9CA3AF',
+  Unknown: '#D1D1CC',
 };
 
 function createCircleIcon(color) {
@@ -162,7 +162,7 @@ export default function PhysicianMap({
         radius: 25,
         blur: 15,
         maxZoom: 12,
-        gradient: { 0.2: '#ffffb2', 0.4: '#fecc5c', 0.6: '#fd8d3c', 0.8: '#f03b20', 1: '#bd0026' },
+        gradient: { 0.2: '#FDE8E8', 0.4: '#F5A3A3', 0.6: '#E86060', 0.8: '#C4122F', 1: '#5C0816' },
       });
 
       heat.addTo(map);
