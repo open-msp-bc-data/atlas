@@ -4,7 +4,16 @@ export async function fetchPhysicians(params = {}) {
   const qs = new URLSearchParams(params).toString();
   const resp = await fetch(`${API_BASE}/physicians?${qs}`);
   if (!resp.ok) throw new Error(`API error: ${resp.status}`);
-  return resp.json();
+  const data = await resp.json();
+  // The API may return a suppression notice object instead of an array when
+  // the filter combination matches too few individuals.
+  if (!Array.isArray(data)) {
+    if (data && data.suppressed) {
+      return [];
+    }
+    throw new Error(`Unexpected response format from /physicians: received ${typeof data} instead of array`);
+  }
+  return data;
 }
 
 export async function fetchAggregations(params = {}) {

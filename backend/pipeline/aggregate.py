@@ -34,7 +34,7 @@ def compute_aggregations(
     agg_cells = []
     for (year, geo_id, spec), members in groups.items():
         amounts = [m["amount_gross"] for m in members if m.get("amount_gross") is not None]
-        n_phys = len(set(m.get("entity_key_hash", id(m)) for m in members))
+        n_phys = len({m["entity_key_hash"] for m in members if m.get("entity_key_hash")})
 
         # Dominance: share of top contributor
         max_share = 0.0

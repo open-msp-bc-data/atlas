@@ -209,6 +209,43 @@ class TestComputeAggregations:
         for cell in result:
             assert "max_share" not in cell
 
+    def test_n_physicians_counts_unique_hashes(self):
+        """n_physicians must be the count of distinct entity_key_hash values."""
+        # Two billing rows for the same physician (same hash) should count as 1
+        records = [
+            {"fiscal_year": "2023-2024", "city": "UniqueTest", "specialty_group": "All",
+             "amount_gross": 100_000, "entity_key_hash": "same-hash"},
+            {"fiscal_year": "2023-2024", "city": "UniqueTest", "specialty_group": "All",
+             "amount_gross": 50_000, "entity_key_hash": "same-hash"},
+            {"fiscal_year": "2023-2024", "city": "UniqueTest", "specialty_group": "All",
+             "amount_gross": 80_000, "entity_key_hash": "other-hash"},
+        ] + [
+            {"fiscal_year": "2023-2024", "city": "UniqueTest", "specialty_group": "All",
+             "amount_gross": 70_000, "entity_key_hash": f"extra-hash-{i}"}
+            for i in range(3)
+        ]
+        result = compute_aggregations(records, geo_level="city", geo_key="city")
+        assert len(result) == 1
+        # 5 unique hashes ("same-hash", "other-hash", and 3 extras) = 5 unique physicians
+        assert result[0]["n_physicians"] == 5
+        assert result[0]["suppressed"] is False
+
+    def test_n_physicians_excludes_missing_hash(self):
+        """Records without an entity_key_hash must not inflate the physician count."""
+        # 6 records: 4 with hashes + 2 without (no hash) → count should be 4, not 6
+        records = [
+            {"fiscal_year": "2023-2024", "city": "HashTest", "specialty_group": "All",
+             "amount_gross": 100_000, "entity_key_hash": f"hash-{i}"}
+            for i in range(4)
+        ] + [
+            {"fiscal_year": "2023-2024", "city": "HashTest", "specialty_group": "All",
+             "amount_gross": 50_000}  # no entity_key_hash
+            for _ in range(2)
+        ]
+        result = compute_aggregations(records, geo_level="city", geo_key="city")
+        assert len(result) == 1
+        assert result[0]["n_physicians"] == 4
+
 
 class TestComputeYoY:
     def _cell(self, geo_id, total, suppressed=False):

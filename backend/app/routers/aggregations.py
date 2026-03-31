@@ -31,6 +31,6 @@ def list_aggregations(
     if specialty_group:
         q = q.filter(Aggregation.specialty_group == specialty_group)
     if not include_suppressed:
-        q = q.filter(Aggregation.suppressed == False)  # noqa: E712
+        q = q.filter(Aggregation.suppressed.is_(False))
 
     return q.offset(offset).limit(limit).all()

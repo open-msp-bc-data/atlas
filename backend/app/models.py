@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from sqlalchemy import Column, Float, Integer, String, Boolean, ForeignKey
+from sqlalchemy import Column, Float, Integer, String, Boolean, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from .database import Base
@@ -76,3 +76,10 @@ class Aggregation(Base):
     pct_change_yoy = Column(Float, nullable=True)
     suppressed = Column(Boolean, default=False)
     suppression_reason = Column(String, nullable=True)
+
+    __table_args__ = (
+        # Prevents duplicate cells when the pipeline is re-run on an existing DB.
+        # create_all() enforces this on new tables; existing databases are handled
+        # by _migrate_aggregation_unique_constraint() in database.py which runs at startup.
+        UniqueConstraint("fiscal_year", "geo_level", "geo_id", "specialty_group", name="uq_aggregation_cell"),
+    )
