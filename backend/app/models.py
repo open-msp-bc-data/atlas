@@ -79,7 +79,7 @@ class Aggregation(Base):
 
     __table_args__ = (
         # Prevents duplicate cells when the pipeline is re-run on an existing DB.
-        # NOTE: create_all() only adds this constraint to *new* tables. For existing
-        # databases you must run a migration (e.g. ALTER TABLE / recreate) to enforce it.
+        # create_all() enforces this on new tables; existing databases are handled
+        # by _migrate_aggregation_unique_constraint() in database.py which runs at startup.
         UniqueConstraint("fiscal_year", "geo_level", "geo_id", "specialty_group", name="uq_aggregation_cell"),
     )

@@ -32,9 +32,10 @@
   pipeline twice would insert duplicate `(fiscal_year, geo_level, geo_id, specialty_group)` rows,
   causing double-counting in charts.
 - **Fixed:** added `UniqueConstraint("fiscal_year", "geo_level", "geo_id", "specialty_group")`.
-- **⚠️ Migration required for existing DBs:** `Base.metadata.create_all()` only enforces this
-  constraint on *newly created* tables. Deployed databases must be migrated manually (e.g. via
-  `ALTER TABLE` or a table rebuild with deduplication) before the constraint takes effect.
+  `Base.metadata.create_all()` enforces this for new tables. For existing databases,
+  `_migrate_aggregation_unique_constraint()` in `database.py` runs automatically at startup:
+  it deduplicates any existing rows (keeping the lowest-id copy) and then creates the unique
+  index via `CREATE UNIQUE INDEX IF NOT EXISTS`, so no manual migration step is required.
 
 ### Code quality: SQLAlchemy `== False` anti-pattern in aggregations router
 - `aggregations.py` used `.filter(Aggregation.suppressed == False)` which triggers a SQLAlchemy

@@ -361,3 +361,101 @@ class TestSuppressionMessageDoesNotLeakThreshold:
         assert not any(ch.isdigit() for ch in message), (
             "Suppression message must not reveal numeric k-anonymity thresholds"
         )
+
+
+class TestAggregationMigration:
+    """_migrate_aggregation_unique_constraint deduplicates and creates the unique index."""
+
+    def _make_legacy_engine(self):
+        """Create an in-memory DB with the aggregations table but WITHOUT the unique index.
+
+        This simulates an existing (pre-migration) database so we can insert duplicates
+        and verify the migration cleans them up correctly.
+        """
+        from sqlalchemy import create_engine, text
+        from sqlalchemy.pool import StaticPool
+        engine = create_engine(
+            "sqlite:///:memory:",
+            connect_args={"check_same_thread": False},
+            poolclass=StaticPool,
+        )
+        with engine.begin() as conn:
+            conn.execute(text(
+                """
+                CREATE TABLE aggregations (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    fiscal_year TEXT NOT NULL,
+                    geo_level TEXT NOT NULL,
+                    geo_id TEXT NOT NULL,
+                    geo_name TEXT NOT NULL,
+                    specialty_group TEXT,
+                    n_physicians INTEGER NOT NULL,
+                    total_payments REAL,
+                    median_payments REAL,
+                    pct_change_yoy REAL,
+                    suppressed INTEGER DEFAULT 0,
+                    suppression_reason TEXT
+                )
+                """
+            ))
+        return engine
+
+    def _insert(self, conn, row_id, fiscal_year, geo_level, geo_id, specialty_group):
+        from sqlalchemy import text
+        conn.execute(text(
+            "INSERT INTO aggregations (id, fiscal_year, geo_level, geo_id, geo_name, "
+            "specialty_group, n_physicians, suppressed) VALUES "
+            "(:id, :fy, :gl, :gi, 'Test', :sg, 1, 0)"
+        ), {"id": row_id, "fy": fiscal_year, "gl": geo_level, "gi": geo_id, "sg": specialty_group})
+
+    def test_deduplicates_duplicate_rows(self):
+        """Duplicate rows are removed, keeping the row with the lowest id."""
+        from sqlalchemy import text
+        from app.database import _migrate_aggregation_unique_constraint
+        engine = self._make_legacy_engine()
+        with engine.begin() as conn:
+            self._insert(conn, 1, "2023-2024", "city", "Van", "All")
+            self._insert(conn, 2, "2023-2024", "city", "Van", "All")  # duplicate
+            self._insert(conn, 3, "2023-2024", "city", "Vic", "All")  # unique
+        _migrate_aggregation_unique_constraint(engine)
+        with engine.connect() as conn:
+            rows = conn.execute(text("SELECT id FROM aggregations ORDER BY id")).fetchall()
+        assert [r[0] for r in rows] == [1, 3], "Duplicate row (id=2) should have been removed"
+
+    def test_unique_rows_are_preserved(self):
+        """Rows that are already unique must not be deleted."""
+        from sqlalchemy import text
+        from app.database import _migrate_aggregation_unique_constraint
+        engine = self._make_legacy_engine()
+        with engine.begin() as conn:
+            self._insert(conn, 1, "2023-2024", "city", "Van", "All")
+            self._insert(conn, 2, "2023-2024", "city", "Vic", "All")
+        _migrate_aggregation_unique_constraint(engine)
+        with engine.connect() as conn:
+            count = conn.execute(text("SELECT COUNT(*) FROM aggregations")).scalar()
+        assert count == 2
+
+    def test_idempotent_when_called_twice(self):
+        """Calling the migration twice must not raise an error or delete valid rows."""
+        from sqlalchemy import text
+        from app.database import _migrate_aggregation_unique_constraint
+        engine = self._make_legacy_engine()
+        with engine.begin() as conn:
+            self._insert(conn, 1, "2023-2024", "city", "Van", "All")
+        _migrate_aggregation_unique_constraint(engine)
+        _migrate_aggregation_unique_constraint(engine)  # second call – must not fail
+        with engine.connect() as conn:
+            count = conn.execute(text("SELECT COUNT(*) FROM aggregations")).scalar()
+        assert count == 1
+
+    def test_unique_index_is_created(self):
+        """The uq_aggregation_cell index must exist after migration."""
+        from sqlalchemy import text
+        from app.database import _migrate_aggregation_unique_constraint
+        engine = self._make_legacy_engine()
+        _migrate_aggregation_unique_constraint(engine)
+        with engine.connect() as conn:
+            indexes = conn.execute(
+                text("SELECT name FROM sqlite_master WHERE type='index' AND name='uq_aggregation_cell'")
+            ).fetchall()
+        assert len(indexes) == 1, "uq_aggregation_cell index must be present after migration"
