@@ -226,7 +226,7 @@ class TestComputeAggregations:
         ]
         result = compute_aggregations(records, geo_level="city", geo_key="city")
         assert len(result) == 1
-        # 2 unique hashes ("same-hash" + "other-hash" + 3 extras) = 5 unique physicians
+        # 5 unique hashes ("same-hash", "other-hash", and 3 extras) = 5 unique physicians
         assert result[0]["n_physicians"] == 5
         assert result[0]["suppressed"] is False
 

@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
+import re
 import time
 from collections import defaultdict
-from typing import Annotated
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from fastapi.responses import JSONResponse
@@ -20,18 +20,21 @@ from ..privacy import billing_range
 
 router = APIRouter(tags=["physicians"])
 
+_FISCAL_YEAR_RE = re.compile(r"^\d{4}-\d{4}$")
+
 
 def _validate_fiscal_year(year: str | None) -> str | None:
-    """Validate that a fiscal year string is in YYYY-YYYY format with consecutive years."""
+    """Validate that a fiscal year string is in YYYY-YYYY format with consecutive years.
+
+    The regex is applied to the raw value (before any trimming) so that inputs
+    with surrounding whitespace like ``"2023-2024 "`` are rejected rather than
+    silently normalised to a valid year.
+    """
     if year is None:
         return None
-    parts = year.split("-")
-    if len(parts) != 2:
+    if not _FISCAL_YEAR_RE.match(year):
         raise HTTPException(status_code=422, detail="year must be in YYYY-YYYY format (e.g. 2023-2024)")
-    try:
-        start, end = int(parts[0]), int(parts[1])
-    except ValueError:
-        raise HTTPException(status_code=422, detail="year must be in YYYY-YYYY format (e.g. 2023-2024)")
+    start, end = int(year[:4]), int(year[5:])
     if end != start + 1:
         raise HTTPException(status_code=422, detail="year must represent consecutive fiscal years (e.g. 2023-2024)")
     return year

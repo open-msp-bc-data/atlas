@@ -16,8 +16,9 @@
 ### Bug: Year query parameter accepted any string (no format validation)
 - `/physicians?year=invalid` and `/heatmap?year=2023` were accepted silently; string-based
   `<=` comparisons on the `year` column produce wrong results with arbitrary strings.
-- **Fixed:** added `pattern=r"^\d{4}-\d{4}$"` validation on both endpoints; invalid formats
-  now return HTTP 422.
+- **Fixed:** added a shared `_validate_fiscal_year()` helper used by both endpoints to validate
+  the `year` query parameter; invalid values (wrong format, non-consecutive years, trailing
+  whitespace, two-digit years) now return HTTP 422.
 
 ### Bug: Frontend crashes when /physicians returns a suppression object instead of an array
 - `App.jsx` called `.map()` directly on the API response. When the server returns a suppression
@@ -31,6 +32,9 @@
   pipeline twice would insert duplicate `(fiscal_year, geo_level, geo_id, specialty_group)` rows,
   causing double-counting in charts.
 - **Fixed:** added `UniqueConstraint("fiscal_year", "geo_level", "geo_id", "specialty_group")`.
+- **⚠️ Migration required for existing DBs:** `Base.metadata.create_all()` only enforces this
+  constraint on *newly created* tables. Deployed databases must be migrated manually (e.g. via
+  `ALTER TABLE` or a table rebuild with deduplication) before the constraint takes effect.
 
 ### Code quality: SQLAlchemy `== False` anti-pattern in aggregations router
 - `aggregations.py` used `.filter(Aggregation.suppressed == False)` which triggers a SQLAlchemy

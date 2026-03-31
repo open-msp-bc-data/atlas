@@ -309,6 +309,26 @@ class TestYearParameterValidation:
         resp = client.get("/heatmap", params={"year": "2022-2023"})
         assert resp.status_code == 200
 
+    def test_short_year_range_rejected_physicians(self, client):
+        """Two-digit years like 23-24 must be rejected."""
+        resp = client.get("/physicians", params={"year": "23-24"})
+        assert resp.status_code == 422
+
+    def test_short_year_range_rejected_heatmap(self, client):
+        """Two-digit years like 23-24 must be rejected."""
+        resp = client.get("/heatmap", params={"year": "23-24"})
+        assert resp.status_code == 422
+
+    def test_trailing_whitespace_year_rejected_physicians(self, client):
+        """Year ranges with trailing whitespace must be rejected."""
+        resp = client.get("/physicians", params={"year": "2023-2024 "})
+        assert resp.status_code == 422
+
+    def test_trailing_whitespace_year_rejected_heatmap(self, client):
+        """Year ranges with trailing whitespace must be rejected."""
+        resp = client.get("/heatmap", params={"year": "2023-2024 "})
+        assert resp.status_code == 422
+
 
 class TestSuppressionMessageDoesNotLeakThreshold:
     """Suppression messages must not reveal the exact k_min threshold."""
@@ -317,6 +337,8 @@ class TestSuppressionMessageDoesNotLeakThreshold:
         resp = client.get("/physicians", params={"city": "SmallTown"})
         data = resp.json()
         assert data["suppressed"] is True
-        # Message must not contain the raw threshold number
+        # Message must not contain any raw numeric threshold value
         message = data.get("message", "")
-        assert "5" not in message, "Suppression message must not reveal the k_min threshold"
+        assert not any(ch.isdigit() for ch in message), (
+            "Suppression message must not reveal numeric k-anonymity thresholds"
+        )

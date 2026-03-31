@@ -78,5 +78,8 @@ class Aggregation(Base):
     suppression_reason = Column(String, nullable=True)
 
     __table_args__ = (
+        # Prevents duplicate cells when the pipeline is re-run on an existing DB.
+        # NOTE: create_all() only adds this constraint to *new* tables. For existing
+        # databases you must run a migration (e.g. ALTER TABLE / recreate) to enforce it.
         UniqueConstraint("fiscal_year", "geo_level", "geo_id", "specialty_group", name="uq_aggregation_cell"),
     )
