@@ -291,6 +291,25 @@ class TestYearParameterValidation:
         resp = client.get("/heatmap", params={"year": "2023"})
         assert resp.status_code == 422
 
+    def test_short_year_range_rejected_physicians(self, client):
+        """Two-digit years like 23-24 must be rejected."""
+        resp = client.get("/physicians", params={"year": "23-24"})
+        assert resp.status_code == 422
+
+    def test_short_year_range_rejected_heatmap(self, client):
+        """Two-digit years like 23-24 must be rejected."""
+        resp = client.get("/heatmap", params={"year": "23-24"})
+        assert resp.status_code == 422
+
+    def test_trailing_whitespace_year_rejected_physicians(self, client):
+        """Year ranges with trailing whitespace must be rejected after trimming."""
+        resp = client.get("/physicians", params={"year": "2023-2024 "})
+        assert resp.status_code == 422
+
+    def test_trailing_whitespace_year_rejected_heatmap(self, client):
+        """Year ranges with trailing whitespace must be rejected after trimming."""
+        resp = client.get("/heatmap", params={"year": "2023-2024 "})
+        assert resp.status_code == 422
     def test_non_consecutive_years_returns_422(self, client):
         """Year range where end != start + 1 should be rejected."""
         resp = client.get("/physicians", params={"year": "2023-2025"})
