@@ -278,3 +278,45 @@ class TestTrendsEndpoint:
         data = resp.json()
         assert data["pseudo_id"] == pseudo_id
         assert len(data["data"]) == 2
+
+
+class TestYearParameterValidation:
+    """Year query parameter must follow YYYY-YYYY format with consecutive years."""
+
+    def test_invalid_year_physicians_returns_422(self, client):
+        resp = client.get("/physicians", params={"year": "invalid-year"})
+        assert resp.status_code == 422
+
+    def test_invalid_year_heatmap_returns_422(self, client):
+        resp = client.get("/heatmap", params={"year": "2023"})
+        assert resp.status_code == 422
+
+    def test_non_consecutive_years_returns_422(self, client):
+        """Year range where end != start + 1 should be rejected."""
+        resp = client.get("/physicians", params={"year": "2023-2025"})
+        assert resp.status_code == 422
+
+    def test_reversed_years_returns_422(self, client):
+        """Year range where end < start should be rejected."""
+        resp = client.get("/physicians", params={"year": "2024-2023"})
+        assert resp.status_code == 422
+
+    def test_valid_year_physicians_succeeds(self, client):
+        resp = client.get("/physicians", params={"year": "2023-2024"})
+        assert resp.status_code == 200
+
+    def test_valid_year_heatmap_succeeds(self, client):
+        resp = client.get("/heatmap", params={"year": "2022-2023"})
+        assert resp.status_code == 200
+
+
+class TestSuppressionMessageDoesNotLeakThreshold:
+    """Suppression messages must not reveal the exact k_min threshold."""
+
+    def test_suppression_message_hides_k_min(self, client):
+        resp = client.get("/physicians", params={"city": "SmallTown"})
+        data = resp.json()
+        assert data["suppressed"] is True
+        # Message must not contain the raw threshold number
+        message = data.get("message", "")
+        assert "5" not in message, "Suppression message must not reveal the k_min threshold"

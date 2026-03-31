@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from sqlalchemy import Column, Float, Integer, String, Boolean, ForeignKey
+from sqlalchemy import Column, Float, Integer, String, Boolean, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 
 from .database import Base
@@ -76,3 +76,7 @@ class Aggregation(Base):
     pct_change_yoy = Column(Float, nullable=True)
     suppressed = Column(Boolean, default=False)
     suppression_reason = Column(String, nullable=True)
+
+    __table_args__ = (
+        UniqueConstraint("fiscal_year", "geo_level", "geo_id", "specialty_group", name="uq_aggregation_cell"),
+    )

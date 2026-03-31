@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import time
 from collections import defaultdict
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from fastapi.responses import JSONResponse
@@ -18,6 +19,22 @@ from ..schemas import PhysicianPublicOut, HeatmapCell, PhysicianTrendOut, TrendP
 from ..privacy import billing_range
 
 router = APIRouter(tags=["physicians"])
+
+
+def _validate_fiscal_year(year: str | None) -> str | None:
+    """Validate that a fiscal year string is in YYYY-YYYY format with consecutive years."""
+    if year is None:
+        return None
+    parts = year.split("-")
+    if len(parts) != 2:
+        raise HTTPException(status_code=422, detail="year must be in YYYY-YYYY format (e.g. 2023-2024)")
+    try:
+        start, end = int(parts[0]), int(parts[1])
+    except ValueError:
+        raise HTTPException(status_code=422, detail="year must be in YYYY-YYYY format (e.g. 2023-2024)")
+    if end != start + 1:
+        raise HTTPException(status_code=422, detail="year must represent consecutive fiscal years (e.g. 2023-2024)")
+    return year
 
 # Grid cell size for heatmap privacy (in degrees, ~3.7–5.6km across BC latitudes)
 _HEATMAP_GRID_SIZE = 0.05
@@ -46,6 +63,7 @@ def list_physicians(
     k_min distinct physicians, a suppression notice is returned instead of
     individual records. Admin users can bypass this with a valid token.
     """
+    year = _validate_fiscal_year(year)
     q = db.query(PhysicianPublic)
     if specialty:
         q = q.filter(PhysicianPublic.specialty_group == specialty)
@@ -64,7 +82,7 @@ def list_physicians(
             return JSONResponse(content={
                 "suppressed": True,
                 "reason": "query_k_anonymity",
-                "message": f"Filter combination returns fewer than {k_min} individuals. "
+                "message": "Filter combination matches too few individuals. "
                            "Results suppressed to prevent re-identification.",
             })
 
@@ -144,7 +162,7 @@ def list_physicians(
 
 @router.get("/heatmap", response_model=list[HeatmapCell])
 def heatmap(
-    year: str | None = Query(None),
+    year: str | None = Query(None, description="Fiscal year (e.g. 2023-2024)"),
     k_anonymity: str = Query("on"),
     x_admin_token: str | None = Header(None),
     db: Session = Depends(get_db),
@@ -155,6 +173,7 @@ def heatmap(
     locations from being inferred. Grid cells with fewer than k_min physicians
     are suppressed.
     """
+    year = _validate_fiscal_year(year)
     k_min = get_privacy_config().get("k_min_unique_phys", 5)
     bypass = k_anonymity == "off" and validate_admin_token(x_admin_token)
 
