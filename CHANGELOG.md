@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.1.0] - 2026-04-01
+
+QA pass: mobile responsive layout, accessibility fix, and FastAPI deprecation cleanup.
+
+### Fixed
+- Mobile layout was completely broken. Sidebar was 280px fixed on all viewports, leaving ~95px for the map on phones. Added responsive breakpoint at 768px that stacks sidebar above map.
+- Heading hierarchy skipped H2 (H1 → H3), breaking screen reader navigation. Sidebar headings are now H2.
+- FastAPI `@app.on_event("startup")` replaced with lifespan context manager, eliminating deprecation warnings.
+
+### Changed
+- Added gstack skill routing rules to CLAUDE.md.
+
 ## [0.2.0.0] - 2026-03-29
 
 Privacy hardening, editorial design system, and comprehensive test coverage.

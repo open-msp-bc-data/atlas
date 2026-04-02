@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,10 +13,26 @@ from pathlib import Path
 from .database import init_db
 from .routers import physicians, aggregations, admin
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    # Fail fast if the privacy salt is still the default placeholder
+    from .config import get_privacy_config
+    salt = os.environ.get("PRIVACY_SALT") or get_privacy_config().get("salt", "")
+    if salt in ("", "CHANGE_ME_IN_PRODUCTION"):
+        raise RuntimeError(
+            "Privacy salt is not configured. Set PRIVACY_SALT env var or update "
+            "privacy.salt in config.yaml before running in production."
+        )
+    yield
+
+
 app = FastAPI(
     title="MSP-BC Open Atlas API",
     description="Privacy-safe geospatial API for British Columbia physician billing data.",
     version="0.1.0",
+    lifespan=lifespan,
 )
 
 # CORS – restrict to known frontend origins (configurable via CORS_ORIGINS env var)
@@ -31,19 +48,6 @@ app.add_middleware(
 app.include_router(physicians.router)
 app.include_router(aggregations.router)
 app.include_router(admin.router)
-
-
-@app.on_event("startup")
-def on_startup():
-    init_db()
-    # Fail fast if the privacy salt is still the default placeholder
-    from .config import get_privacy_config
-    salt = os.environ.get("PRIVACY_SALT") or get_privacy_config().get("salt", "")
-    if salt in ("", "CHANGE_ME_IN_PRODUCTION"):
-        raise RuntimeError(
-            "Privacy salt is not configured. Set PRIVACY_SALT env var or update "
-            "privacy.salt in config.yaml before running in production."
-        )
 
 
 @app.get("/health")

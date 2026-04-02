@@ -94,7 +94,7 @@ function App() {
           )}
 
           <div className="sidebar-section">
-            <h3>Summary</h3>
+            <h2 className="sidebar-heading">Summary</h2>
             <p>
               <strong>{physicians.length}</strong> physicians displayed
             </p>
@@ -104,7 +104,7 @@ function App() {
           </div>
 
           <div className="sidebar-section privacy-notice">
-            <h3>Privacy Notice</h3>
+            <h2 className="sidebar-heading">Privacy Notice</h2>
             <p>
               All data is anonymised. Locations are approximate (±1.5 km jitter).
               Physician names are replaced with pseudonymous IDs. Groups with fewer
