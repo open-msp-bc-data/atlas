@@ -32,8 +32,20 @@ def load_config(path: Path | None = None) -> dict[str, Any]:
     return cfg
 
 
+_privacy_config_frozen: dict[str, Any] | None = None
+
+
 def get_privacy_config() -> dict[str, Any]:
-    return load_config()["privacy"]
+    """Return the privacy configuration, frozen after first access.
+
+    Once loaded, the privacy config never changes for the lifetime of the
+    process. This prevents inconsistent behavior across workers if config.yaml
+    is modified without a restart.
+    """
+    global _privacy_config_frozen
+    if _privacy_config_frozen is None:
+        _privacy_config_frozen = dict(load_config()["privacy"])
+    return _privacy_config_frozen
 
 
 def get_db_url() -> str:
