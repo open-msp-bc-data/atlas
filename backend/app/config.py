@@ -1,4 +1,9 @@
-"""Application configuration loaded from config.yaml."""
+"""Application configuration loaded from config.yaml.
+
+Configuration is loaded once and cached for the process lifetime. Changes to
+config.yaml require a full application restart to take effect. In multi-worker
+deployments (e.g. gunicorn), each worker caches its own copy independently.
+"""
 
 from __future__ import annotations
 
