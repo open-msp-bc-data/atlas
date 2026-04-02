@@ -37,6 +37,8 @@ def _validate_fiscal_year(year: str | None) -> str | None:
     start, end = int(year[:4]), int(year[5:])
     if end != start + 1:
         raise HTTPException(status_code=422, detail="year must represent consecutive fiscal years (e.g. 2023-2024)")
+    if not (1900 <= start <= 2100):
+        raise HTTPException(status_code=422, detail="year must be between 1900 and 2100")
     return year
 
 # Grid cell size for heatmap privacy (in degrees, ~3.7–5.6km across BC latitudes)
