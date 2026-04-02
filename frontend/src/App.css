@@ -329,3 +329,30 @@ body {
 .physician-tooltip strong {
   color: var(--accent);
 }
+
+/* ── Responsive ──────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .app-body {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    min-width: 0;
+    max-height: 45vh;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .main-content {
+    min-height: 50vh;
+  }
+
+  .charts-grid {
+    flex-direction: column;
+  }
+
+  .chart-card {
+    min-width: 0;
+  }
+}
