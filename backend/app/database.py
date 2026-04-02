@@ -46,12 +46,19 @@ def _migrate_aggregation_unique_constraint(engine) -> None:
        keeping the row with the lowest ``id`` for each group.
     2. Creating the unique index if it does not already exist.
 
-    It is safe to call multiple times (the CREATE INDEX uses IF NOT EXISTS).
+    Skips entirely if the index already exists (avoids table locks on every restart).
     """
     with engine.begin() as conn:
+        # Check if the index already exists — skip the whole migration if so.
+        # This avoids acquiring table locks on every startup, which matters
+        # for PostgreSQL with zero-downtime deploys.
+        result = conn.execute(text(
+            "SELECT 1 FROM sqlite_master WHERE type='index' AND name='uq_aggregation_cell'"
+        )).fetchone()
+        if result is not None:
+            return
+
         # Step 1 - remove duplicate rows, keeping the earliest (lowest id).
-        # GROUP BY + MIN is straightforward and sufficient for the small aggregate
-        # table produced by this pipeline (typically a few hundred rows).
         conn.execute(text(
             """
             DELETE FROM aggregations
@@ -62,8 +69,7 @@ def _migrate_aggregation_unique_constraint(engine) -> None:
             )
             """
         ))
-        # Step 2 - create unique index if absent (SQLite & PostgreSQL both support
-        # CREATE UNIQUE INDEX IF NOT EXISTS)
+        # Step 2 - create unique index
         conn.execute(text(
             """
             CREATE UNIQUE INDEX IF NOT EXISTS uq_aggregation_cell

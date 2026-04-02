@@ -148,11 +148,16 @@ def apply_dominance_suppression(
     return result
 
 
-def billing_range(amount: float, step: int = 50_000) -> str:
+def billing_range(amount: float, step: int = 50_000) -> str | None:
     """Convert an exact billing amount to a range string for public display.
+
+    Returns ``None`` for non-positive amounts (refunds, errors, zero billing)
+    to avoid leaking information or producing nonsense ranges.
 
     Example: 237_000 → ``"200k–250k"``
     """
+    if amount is None or amount <= 0:
+        return None
     lower = int(amount // step) * step
     upper = lower + step
     return f"{lower // 1000}k\u2013{upper // 1000}k"
