@@ -14,6 +14,9 @@ L.Icon.Default.mergeOptions({
 const BC_CENTER = [53.7, -127.6];
 const BC_ZOOM = 5;
 
+// Jitter radius in km (must match backend privacy.location_jitter_km)
+const JITTER_RADIUS_KM = 1.5;
+
 // Specialty → color mapping for markers
 const SPECIALTY_COLORS = {
   'General Practice': '#1B7340',
@@ -31,8 +34,21 @@ const SPECIALTY_COLORS = {
   Pathology: '#4D7C0F',
   'Physical Medicine': '#A16207',
   'Other Specialty': '#9CA3AF',
-  Unknown: '#D1D1CC',
+  Unknown: '#9CA3AF',
 };
+
+// Billing amount → color (used when specialty is unknown)
+function billingColor(rangeStr) {
+  if (!rangeStr) return '#D1D1CC';
+  const match = rangeStr.match(/(\d+)k/);
+  if (!match) return '#D1D1CC';
+  const lower = parseInt(match[1], 10);
+  if (lower >= 500) return '#5C0816';
+  if (lower >= 300) return '#C4122F';
+  if (lower >= 200) return '#E86060';
+  if (lower >= 100) return '#F5A3A3';
+  return '#FDE8E8';
+}
 
 function createCircleIcon(color) {
   return L.divIcon({
@@ -59,6 +75,7 @@ export default function PhysicianMap({
   const mapInstance = useRef(null);
   const markersRef = useRef(null);
   const heatLayerRef = useRef(null);
+  const jitterCirclesRef = useRef(null);
 
   // Initialize map once
   useEffect(() => {
@@ -89,9 +106,12 @@ export default function PhysicianMap({
     const map = mapInstance.current;
     if (!map) return;
 
-    // Remove old markers
+    // Remove old markers and jitter circles
     if (markersRef.current) {
       map.removeLayer(markersRef.current);
+    }
+    if (jitterCirclesRef.current) {
+      map.removeLayer(jitterCirclesRef.current);
     }
 
     const cluster = L.markerClusterGroup({
@@ -100,13 +120,32 @@ export default function PhysicianMap({
       showCoverageOnHover: false,
     });
 
+    const jitterGroup = L.layerGroup();
+
     physicians.forEach((phys) => {
       if (phys.lat_approx == null || phys.lng_approx == null) return;
 
-      const color = SPECIALTY_COLORS[phys.specialty_group] || SPECIALTY_COLORS.Unknown;
+      // Color by specialty if known, otherwise by billing amount
+      const color =
+        phys.specialty_group && phys.specialty_group !== 'Unknown'
+          ? SPECIALTY_COLORS[phys.specialty_group] || SPECIALTY_COLORS['Other Specialty']
+          : billingColor(phys.latest_billing_range);
+
       const marker = L.marker([phys.lat_approx, phys.lng_approx], {
         icon: createCircleIcon(color),
       });
+
+      // Jitter radius circle (shows approximate area, visible on zoom)
+      const circle = L.circle([phys.lat_approx, phys.lng_approx], {
+        radius: JITTER_RADIUS_KM * 1000,
+        color: '#C4122F',
+        fillColor: '#C4122F',
+        fillOpacity: 0.04,
+        weight: 0.5,
+        opacity: 0.15,
+        interactive: false,
+      });
+      jitterGroup.addLayer(circle);
 
       const tooltipEl = document.createElement('div');
       tooltipEl.className = 'physician-tooltip';
@@ -136,8 +175,10 @@ export default function PhysicianMap({
       cluster.addLayer(marker);
     });
 
+    map.addLayer(jitterGroup);
     map.addLayer(cluster);
     markersRef.current = cluster;
+    jitterCirclesRef.current = jitterGroup;
   }, [physicians, onSelectPhysician]);
 
   // Update heatmap layer
@@ -159,9 +200,9 @@ export default function PhysicianMap({
       ]);
 
       const heat = L.heatLayer(points, {
-        radius: 25,
-        blur: 15,
-        maxZoom: 12,
+        radius: 40,
+        blur: 25,
+        maxZoom: 10,
         gradient: { 0.2: '#FDE8E8', 0.4: '#F5A3A3', 0.6: '#E86060', 0.8: '#C4122F', 1: '#5C0816' },
       });
 

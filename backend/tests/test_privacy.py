@@ -146,13 +146,13 @@ class TestDominanceSuppression:
 
 class TestBillingRange:
     def test_standard_range(self):
-        assert billing_range(237_000) == "200k\u2013250k"
+        assert billing_range(237_000) == "230k\u2013240k"
 
     def test_low_range(self):
-        assert billing_range(45_000) == "0k\u201350k"
+        assert billing_range(45_000) == "40k\u201350k"
 
     def test_exact_boundary(self):
-        assert billing_range(200_000) == "200k\u2013250k"
+        assert billing_range(200_000) == "200k\u2013210k"
 
     def test_custom_step(self):
         assert billing_range(237_000, step=100_000) == "200k\u2013300k"
