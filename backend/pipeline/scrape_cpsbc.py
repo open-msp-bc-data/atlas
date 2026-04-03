@@ -45,12 +45,16 @@ USER_AGENT = (
 )
 
 # Polite delay range (seconds) between page requests
-DELAY_MIN = 4.0
-DELAY_MAX = 6.0
+DELAY_MIN = 8.0
+DELAY_MAX = 15.0
 
 # Longer delay between letter prefixes (let the server breathe)
-PREFIX_DELAY_MIN = 8.0
-PREFIX_DELAY_MAX = 12.0
+PREFIX_DELAY_MIN = 20.0
+PREFIX_DELAY_MAX = 35.0
+
+# Backoff delay when rate-limited (seconds)
+RATE_LIMIT_BACKOFF = 300.0  # 5 minutes
+MAX_CONSECUTIVE_ERRORS = 5  # stop after this many failures in a row
 
 
 def _polite_sleep(min_s: float = DELAY_MIN, max_s: float = DELAY_MAX):
@@ -177,7 +181,13 @@ def scrape_prefix(prefix: str, playwright_instance) -> list[dict]:
 
     try:
         # Initial search
-        page.goto(BASE_URL, wait_until="networkidle", timeout=30000)
+        resp = page.goto(BASE_URL, wait_until="networkidle", timeout=30000)
+        if resp and resp.status == 429:
+            print(f"    RATE LIMITED (429) on initial load. Backing off {RATE_LIMIT_BACKOFF}s...")
+            time.sleep(RATE_LIMIT_BACKOFF)
+            browser.close()
+            return results
+
         page.fill('input[name="ps_last_name"]', prefix)
         page.click('#edit-ps-submit')
         page.wait_for_timeout(5000)
@@ -196,11 +206,16 @@ def scrape_prefix(prefix: str, playwright_instance) -> list[dict]:
             if not _click_next_page(page):
                 break
 
-            page.wait_for_timeout(4000)
+            page.wait_for_timeout(5000)
             page_num += 1
 
     except Exception as e:
-        print(f"    ERROR on page {page_num if 'page_num' in dir() else '?'}: {e}")
+        error_msg = str(e)
+        if "429" in error_msg or "Timeout" in error_msg:
+            print(f"    RATE LIMITED or TIMEOUT on page {page_num if 'page_num' in dir() else '?'}. Backing off...")
+            time.sleep(RATE_LIMIT_BACKOFF)
+        else:
+            print(f"    ERROR on page {page_num if 'page_num' in dir() else '?'}: {e}")
     finally:
         browser.close()
 
@@ -280,6 +295,8 @@ def main():
         print(f"  Resuming with {len(all_results):,} existing results")
     print()
 
+    consecutive_errors = 0
+
     with sync_playwright() as pw:
         for i, prefix in enumerate(remaining):
             print(f"[{prefix}] Searching prefix {i+1}/{len(remaining)}...")
@@ -287,6 +304,16 @@ def main():
 
             results = scrape_prefix(prefix, pw)
             elapsed = time.time() - start
+
+            # Track consecutive empty results (possible rate limiting)
+            if len(results) == 0 and elapsed > 25:
+                consecutive_errors += 1
+                if consecutive_errors >= MAX_CONSECUTIVE_ERRORS:
+                    print(f"\n{MAX_CONSECUTIVE_ERRORS} consecutive failures. Likely rate-limited.")
+                    print(f"Resume later with: python -m pipeline.scrape_cpsbc --resume")
+                    break
+            else:
+                consecutive_errors = 0
 
             all_results.extend(results)
             progress["completed_prefixes"].append(prefix)
