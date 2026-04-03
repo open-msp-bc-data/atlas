@@ -23,7 +23,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from app.database import init_db, get_engine
 from app.models import PhysicianRaw, Billing, PhysicianPublic, Aggregation
-from app.privacy import deterministic_pseudo_id, jitter_location, billing_range
+from app.privacy import deterministic_pseudo_id, jitter_location
 from pipeline.ingest_bluebook import parse_bluebook_pdf
 from pipeline.geocode import BC_CITY_CENTROIDS, CITY_TO_HEALTH_AUTHORITY
 from pipeline.entity_resolution import normalize_name
