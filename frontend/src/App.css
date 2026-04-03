@@ -126,7 +126,8 @@ body {
 }
 
 /* ── Filter panel ─────────────────────────────────────────────────── */
-.filter-panel h3 {
+.filter-panel h3,
+.filter-panel h2.sidebar-heading {
   font-family: var(--font-display);
   font-size: 1.05rem;
   font-weight: 400;
@@ -402,7 +403,8 @@ body {
   border-left: 3px solid var(--border-strong);
 }
 
-.sidebar-section h3 {
+.sidebar-section h3,
+.sidebar-section h2.sidebar-heading {
   font-family: var(--font-display);
   font-size: 0.95rem;
   font-weight: 400;
@@ -636,4 +638,31 @@ body {
 
 .physician-tooltip strong {
   color: var(--accent);
+}
+
+/* ── Responsive ──────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .app-body {
+    flex-direction: column;
+  }
+
+  .sidebar {
+    width: 100%;
+    min-width: 0;
+    max-height: 45vh;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .main-content {
+    min-height: 50vh;
+  }
+
+  .charts-grid {
+    flex-direction: column;
+  }
+
+  .chart-card {
+    min-width: 0;
+  }
 }

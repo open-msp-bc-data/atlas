@@ -128,7 +128,7 @@ export default function FilterPanel({
 
   return (
     <div className="filter-panel">
-      <h3>Filters</h3>
+      <h2 className="sidebar-heading">Filters</h2>
 
       {/* Year range */}
       <div className="filter-group">
