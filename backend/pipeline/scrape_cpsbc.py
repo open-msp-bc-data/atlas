@@ -151,16 +151,22 @@ def _parse_result_cards(page) -> list[dict]:
     return results
 
 
-def _has_next_page(page) -> str | None:
-    """Return the next page URL if pagination exists, else None."""
-    return page.evaluate("""
+def _click_next_page(page) -> bool:
+    """Click the NEXT PAGE link if it exists. Returns True if clicked.
+
+    We must click within the page context (not navigate to the URL) because
+    the CPSBC site uses server-side session state for search results.
+    """
+    clicked = page.evaluate("""
         () => {
             const next = Array.from(document.querySelectorAll('a')).find(
                 a => a.innerText.trim().toUpperCase() === 'NEXT PAGE'
             );
-            return next ? next.href : null;
+            if (next) { next.click(); return true; }
+            return false;
         }
     """)
+    return clicked
 
 
 def scrape_prefix(prefix: str, playwright_instance) -> list[dict]:
@@ -185,13 +191,12 @@ def scrape_prefix(prefix: str, playwright_instance) -> list[dict]:
             results.extend(cards)
             print(f"    Page {page_num}: {len(cards)} results (total: {len(results)})")
 
-            next_url = _has_next_page(page)
-            if not next_url:
+            _polite_sleep()
+
+            if not _click_next_page(page):
                 break
 
-            _polite_sleep()
-            page.goto(next_url, wait_until="networkidle", timeout=30000)
-            page.wait_for_timeout(2000)
+            page.wait_for_timeout(4000)
             page_num += 1
 
     except Exception as e:
