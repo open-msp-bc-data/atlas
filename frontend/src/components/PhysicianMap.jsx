@@ -14,9 +14,6 @@ L.Icon.Default.mergeOptions({
 const BC_CENTER = [53.7, -127.6];
 const BC_ZOOM = 5;
 
-// Jitter radius in km (must match backend privacy.location_jitter_km)
-const JITTER_RADIUS_KM = 1.5;
-
 // Specialty → color mapping for markers
 const SPECIALTY_COLORS = {
   'General Practice': '#1B7340',
@@ -75,7 +72,6 @@ export default function PhysicianMap({
   const mapInstance = useRef(null);
   const markersRef = useRef(null);
   const heatLayerRef = useRef(null);
-  const jitterCirclesRef = useRef(null);
 
   // Initialize map once
   useEffect(() => {
@@ -106,12 +102,9 @@ export default function PhysicianMap({
     const map = mapInstance.current;
     if (!map) return;
 
-    // Remove old markers and jitter circles
+    // Remove old markers
     if (markersRef.current) {
       map.removeLayer(markersRef.current);
-    }
-    if (jitterCirclesRef.current) {
-      map.removeLayer(jitterCirclesRef.current);
     }
 
     const cluster = L.markerClusterGroup({
@@ -119,8 +112,6 @@ export default function PhysicianMap({
       spiderfyOnMaxZoom: true,
       showCoverageOnHover: false,
     });
-
-    const jitterGroup = L.layerGroup();
 
     physicians.forEach((phys) => {
       if (phys.lat_approx == null || phys.lng_approx == null) return;
@@ -134,18 +125,6 @@ export default function PhysicianMap({
       const marker = L.marker([phys.lat_approx, phys.lng_approx], {
         icon: createCircleIcon(color),
       });
-
-      // Jitter radius circle (shows approximate area, visible on zoom)
-      const circle = L.circle([phys.lat_approx, phys.lng_approx], {
-        radius: JITTER_RADIUS_KM * 1000,
-        color: '#C4122F',
-        fillColor: '#C4122F',
-        fillOpacity: 0.04,
-        weight: 0.5,
-        opacity: 0.15,
-        interactive: false,
-      });
-      jitterGroup.addLayer(circle);
 
       const tooltipEl = document.createElement('div');
       tooltipEl.className = 'physician-tooltip';
@@ -175,10 +154,8 @@ export default function PhysicianMap({
       cluster.addLayer(marker);
     });
 
-    map.addLayer(jitterGroup);
     map.addLayer(cluster);
     markersRef.current = cluster;
-    jitterCirclesRef.current = jitterGroup;
   }, [physicians, onSelectPhysician]);
 
   // Update heatmap layer
@@ -211,5 +188,5 @@ export default function PhysicianMap({
     }
   }, [showHeatmap, heatmapData]);
 
-  return <div ref={mapRef} className="map-container" style={{ height: '100%', minHeight: '400px' }} />;
+  return <div ref={mapRef} className="map-container" />;
 }

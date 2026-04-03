@@ -57,6 +57,7 @@ body {
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex-shrink: 0;
 }
 
 .app-header h1 {
@@ -86,6 +87,8 @@ body {
 .app-body {
   display: flex;
   flex: 1;
+  /* Fill viewport height minus header (52px) and footer (~38px) */
+  height: calc(100vh - 90px);
   overflow: hidden;
 }
 
@@ -106,12 +109,15 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-width: 0;
 }
 
 /* ── Map ──────────────────────────────────────────────────────────── */
 .map-container {
-  flex: 1;
-  min-height: 400px;
+  /* 65% of viewport height */
+  height: 65vh;
+  min-height: 420px;
+  flex-shrink: 0;
 }
 
 .map-container .leaflet-container {
@@ -130,6 +136,7 @@ body {
 
 .filter-group {
   margin-bottom: 12px;
+  position: relative;
 }
 
 .filter-group label {
@@ -177,6 +184,216 @@ body {
   accent-color: var(--accent);
 }
 
+/* ── Year range ───────────────────────────────────────────────────── */
+.year-range-row {
+  display: flex;
+  gap: 8px;
+}
+
+.year-range-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.year-range-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-light);
+}
+
+.year-range-note {
+  font-size: 0.72rem;
+  color: var(--text-light);
+  margin-top: 5px;
+  font-style: italic;
+}
+
+/* ── Multi-select ─────────────────────────────────────────────────── */
+.multiselect-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 5px;
+}
+
+.multiselect-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  padding: 2px 6px;
+  border-radius: 0;
+  line-height: 1.4;
+}
+
+.multiselect-tag-remove {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+  font-size: 0.9rem;
+  line-height: 1;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+.multiselect-tag-remove:hover {
+  color: #fff;
+}
+
+.multiselect-input {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 0;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  color: var(--text);
+  background: var(--surface);
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.multiselect-input:focus {
+  border-color: var(--accent);
+}
+
+.multiselect-dropdown {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-top: none;
+  z-index: 200;
+  max-height: 180px;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.multiselect-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  font-size: 0.83rem;
+  cursor: pointer;
+  transition: background 0.1s;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text);
+}
+
+.multiselect-option:hover {
+  background: var(--bg);
+}
+
+.multiselect-option input[type='checkbox'] {
+  accent-color: var(--accent);
+  width: auto;
+  flex-shrink: 0;
+}
+
+.multiselect-empty {
+  padding: 10px;
+  font-size: 0.83rem;
+  color: var(--text-light);
+  text-align: center;
+}
+
+/* ── Info / legend panel ──────────────────────────────────────────── */
+.info-panel {
+  border-left: 3px solid var(--accent);
+  background: var(--bg);
+}
+
+.info-panel-toggle {
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 10px 14px;
+  text-align: left;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 400;
+  color: var(--text);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: color 0.15s;
+}
+
+.info-panel-toggle:hover {
+  color: var(--accent);
+}
+
+.info-panel-chevron {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+.info-panel-body {
+  padding: 0 14px 12px;
+  animation: fadeIn 0.15s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.info-section-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.legend-list,
+.legend-billing {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.8rem;
+  color: var(--text);
+}
+
+.legend-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.info-note {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-top: 8px;
+  line-height: 1.4;
+}
+
 /* ── Sidebar sections ─────────────────────────────────────────────── */
 .sidebar-section {
   padding: 14px;
@@ -215,43 +432,131 @@ body {
   color: var(--warning);
 }
 
-/* ── Charts area ──────────────────────────────────────────────────── */
-.charts-area {
-  padding: 20px;
+/* ── Data panel (was charts-area) ─────────────────────────────────── */
+.data-panel {
   background: var(--surface);
   border-top: 1px solid var(--border);
-  max-height: 320px;
-  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-.charts-area h3 {
+.data-panel-header {
+  padding: 16px 20px 12px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.data-panel-header h3 {
   font-family: var(--font-display);
   font-size: 1.05rem;
   font-weight: 400;
-  margin-bottom: 16px;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.data-panel-caption {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.data-table-wrap {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-body);
+  font-size: 0.83rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.data-th {
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  border-bottom: 2px solid var(--border-strong);
+  padding: 9px 12px;
+  text-align: left;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  transition: color 0.15s;
+}
+
+.data-th:hover {
   color: var(--text);
 }
 
-.charts-grid {
-  display: flex;
-  gap: 16px;
-  flex-wrap: wrap;
+.data-th-active {
+  color: var(--accent);
 }
 
-.chart-card {
-  flex: 1;
-  min-width: 280px;
+.data-th-num {
+  text-align: right;
+}
+
+.sort-indicator {
+  margin-left: 4px;
+  font-size: 0.65rem;
+}
+
+.sort-inactive {
+  color: var(--text-light);
+}
+
+.sort-active {
+  color: var(--accent);
+}
+
+.data-row {
+  border-bottom: 1px solid var(--border);
+  transition: background 0.1s;
+}
+
+.data-row:hover {
   background: var(--bg);
-  padding: 16px;
-  border: 1px solid var(--border);
 }
 
-.chart-card h4 {
-  font-size: 0.75rem;
+.data-td {
+  padding: 8px 12px;
+  color: var(--text);
+  vertical-align: middle;
+}
+
+.data-td-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.data-td-muted {
+  color: var(--text-light);
+}
+
+.data-td-name {
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: 12px;
+  white-space: nowrap;
+}
+
+.yoy-up {
+  color: var(--success);
+}
+
+.yoy-down {
+  color: var(--error);
+}
+
+.yoy-flat {
   color: var(--text-muted);
 }
 
@@ -292,6 +597,7 @@ body {
   padding: 10px 20px;
   font-size: 0.85rem;
   border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
 }
 
 .loading-overlay {
@@ -299,6 +605,7 @@ body {
   padding: 16px;
   color: var(--text-muted);
   font-size: 0.9rem;
+  flex-shrink: 0;
 }
 
 /* ── Footer ───────────────────────────────────────────────────────── */
@@ -308,6 +615,7 @@ body {
   padding: 10px 24px;
   font-size: 0.75rem;
   text-align: center;
+  flex-shrink: 0;
 }
 
 .app-footer a {

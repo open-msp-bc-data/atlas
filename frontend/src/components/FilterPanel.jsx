@@ -1,3 +1,101 @@
+import { useState, useRef, useEffect } from 'react';
+
+// ── MultiSelect ─────────────────────────────────────────────────────────────
+// A searchable multi-select with tag chips. No external dependencies.
+function MultiSelect({ id, label, options, selected, onChange, placeholder }) {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const containerRef = useRef(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleOutside(e) {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, []);
+
+  const filtered = options.filter((opt) =>
+    opt.toLowerCase().includes(search.toLowerCase())
+  );
+
+  function toggle(value) {
+    if (selected.includes(value)) {
+      onChange(selected.filter((v) => v !== value));
+    } else {
+      onChange([...selected, value]);
+    }
+  }
+
+  function removeTag(value, e) {
+    e.stopPropagation();
+    onChange(selected.filter((v) => v !== value));
+  }
+
+  return (
+    <div className="filter-group" ref={containerRef}>
+      <label htmlFor={id}>{label}</label>
+
+      {/* Selected tags */}
+      {selected.length > 0 && (
+        <div className="multiselect-tags">
+          {selected.map((v) => (
+            <span key={v} className="multiselect-tag">
+              {v}
+              <button
+                type="button"
+                className="multiselect-tag-remove"
+                onClick={(e) => removeTag(v, e)}
+                aria-label={`Remove ${v}`}
+              >
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Search input that opens dropdown */}
+      <input
+        id={id}
+        type="text"
+        className="multiselect-input"
+        placeholder={selected.length === 0 ? placeholder || `All — click to filter` : `Add more…`}
+        value={search}
+        onFocus={() => setOpen(true)}
+        onChange={(e) => {
+          setSearch(e.target.value);
+          setOpen(true);
+        }}
+        autoComplete="off"
+      />
+
+      {/* Dropdown */}
+      {open && (
+        <div className="multiselect-dropdown">
+          {filtered.length === 0 && (
+            <div className="multiselect-empty">No matches</div>
+          )}
+          {filtered.map((opt) => (
+            <label key={opt} className="multiselect-option">
+              <input
+                type="checkbox"
+                checked={selected.includes(opt)}
+                onChange={() => toggle(opt)}
+              />
+              <span>{opt}</span>
+            </label>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── FilterPanel ──────────────────────────────────────────────────────────────
 export default function FilterPanel({
   filters,
   onFilterChange,
@@ -6,72 +104,84 @@ export default function FilterPanel({
   healthAuthorities,
   years,
 }) {
+  // Year range: fromYear / toYear stored separately in filters
+  const fromYear = filters.fromYear || years[0] || '';
+  const toYear = filters.toYear || years[years.length - 1] || '';
+
+  function handleFromYear(e) {
+    const val = e.target.value;
+    onFilterChange('fromYear', val);
+    // If toYear is now before fromYear, push toYear forward
+    if (toYear && val && years.indexOf(val) > years.indexOf(toYear)) {
+      onFilterChange('toYear', val);
+    }
+    // Pass toYear (or fromYear if toYear unset) as the active `year`
+    const active = toYear && years.indexOf(toYear) >= years.indexOf(val) ? toYear : val;
+    onFilterChange('year', active);
+  }
+
+  function handleToYear(e) {
+    const val = e.target.value;
+    onFilterChange('toYear', val);
+    onFilterChange('year', val);
+  }
+
   return (
     <div className="filter-panel">
       <h3>Filters</h3>
 
+      {/* Year range */}
       <div className="filter-group">
-        <label htmlFor="year-select">Fiscal Year</label>
-        <select
-          id="year-select"
-          value={filters.year}
-          onChange={(e) => onFilterChange('year', e.target.value)}
-        >
-          {years.map((y) => (
-            <option key={y} value={y}>
-              {y}
-            </option>
-          ))}
-        </select>
+        <label>Fiscal Year Range</label>
+        <div className="year-range-row">
+          <div className="year-range-col">
+            <span className="year-range-label">From</span>
+            <select value={fromYear} onChange={handleFromYear}>
+              {years.map((y) => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+            </select>
+          </div>
+          <div className="year-range-col">
+            <span className="year-range-label">To</span>
+            <select value={toYear} onChange={handleToYear}>
+              {years
+                .filter((y) => !fromYear || years.indexOf(y) >= years.indexOf(fromYear))
+                .map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+            </select>
+          </div>
+        </div>
+        <p className="year-range-note">Showing data for {toYear}</p>
       </div>
 
-      <div className="filter-group">
-        <label htmlFor="specialty-select">Specialty Group</label>
-        <select
-          id="specialty-select"
-          value={filters.specialty}
-          onChange={(e) => onFilterChange('specialty', e.target.value)}
-        >
-          <option value="">All Specialties</option>
-          {specialties.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-      </div>
+      <MultiSelect
+        id="specialty-select"
+        label="Specialty Group"
+        options={specialties}
+        selected={filters.specialty}
+        onChange={(val) => onFilterChange('specialty', val)}
+        placeholder="All Specialties"
+      />
 
-      <div className="filter-group">
-        <label htmlFor="city-select">City</label>
-        <select
-          id="city-select"
-          value={filters.city}
-          onChange={(e) => onFilterChange('city', e.target.value)}
-        >
-          <option value="">All Cities</option>
-          {cities.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
-        </select>
-      </div>
+      <MultiSelect
+        id="city-select"
+        label="City"
+        options={cities}
+        selected={filters.city}
+        onChange={(val) => onFilterChange('city', val)}
+        placeholder="All Cities"
+      />
 
-      <div className="filter-group">
-        <label htmlFor="ha-select">Health Authority</label>
-        <select
-          id="ha-select"
-          value={filters.health_authority}
-          onChange={(e) => onFilterChange('health_authority', e.target.value)}
-        >
-          <option value="">All Health Authorities</option>
-          {healthAuthorities.map((ha) => (
-            <option key={ha} value={ha}>
-              {ha}
-            </option>
-          ))}
-        </select>
-      </div>
+      <MultiSelect
+        id="ha-select"
+        label="Health Authority"
+        options={healthAuthorities}
+        selected={filters.health_authority}
+        onChange={(val) => onFilterChange('health_authority', val)}
+        placeholder="All Health Authorities"
+      />
 
       <div className="filter-group">
         <label className="filter-toggle">
