@@ -31,8 +31,21 @@ const SPECIALTY_COLORS = {
   Pathology: '#4D7C0F',
   'Physical Medicine': '#A16207',
   'Other Specialty': '#9CA3AF',
-  Unknown: '#D1D1CC',
+  Unknown: '#9CA3AF',
 };
+
+// Billing amount → color (used when specialty is unknown)
+function billingColor(rangeStr) {
+  if (!rangeStr) return '#D1D1CC';
+  const match = rangeStr.match(/(\d+)k/);
+  if (!match) return '#D1D1CC';
+  const lower = parseInt(match[1], 10);
+  if (lower >= 500) return '#5C0816';
+  if (lower >= 300) return '#C4122F';
+  if (lower >= 200) return '#E86060';
+  if (lower >= 100) return '#F5A3A3';
+  return '#FDE8E8';
+}
 
 function createCircleIcon(color) {
   return L.divIcon({
@@ -103,7 +116,12 @@ export default function PhysicianMap({
     physicians.forEach((phys) => {
       if (phys.lat_approx == null || phys.lng_approx == null) return;
 
-      const color = SPECIALTY_COLORS[phys.specialty_group] || SPECIALTY_COLORS.Unknown;
+      // Color by specialty if known, otherwise by billing amount
+      const color =
+        phys.specialty_group && phys.specialty_group !== 'Unknown'
+          ? SPECIALTY_COLORS[phys.specialty_group] || SPECIALTY_COLORS['Other Specialty']
+          : billingColor(phys.latest_billing_range);
+
       const marker = L.marker([phys.lat_approx, phys.lng_approx], {
         icon: createCircleIcon(color),
       });
@@ -159,9 +177,9 @@ export default function PhysicianMap({
       ]);
 
       const heat = L.heatLayer(points, {
-        radius: 25,
-        blur: 15,
-        maxZoom: 12,
+        radius: 40,
+        blur: 25,
+        maxZoom: 10,
         gradient: { 0.2: '#FDE8E8', 0.4: '#F5A3A3', 0.6: '#E86060', 0.8: '#C4122F', 1: '#5C0816' },
       });
 
@@ -170,5 +188,5 @@ export default function PhysicianMap({
     }
   }, [showHeatmap, heatmapData]);
 
-  return <div ref={mapRef} className="map-container" style={{ height: '100%', minHeight: '400px' }} />;
+  return <div ref={mapRef} className="map-container" />;
 }

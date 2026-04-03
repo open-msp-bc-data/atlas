@@ -1,5 +1,33 @@
 # Changelog
 
+## [0.3.0.0] - 2026-04-03
+
+UI overhaul, real data pipeline, and CPSBC physician directory integration.
+
+### Added
+- Multi-select filters with search for Specialty, City, and Health Authority. Select multiple values, search within options, remove with tag chips.
+- Year range selector (FROM/TO) covering all 11 fiscal years from 2011 to 2024.
+- Sortable data table replacing the old bar chart and pie chart. Shows all regions with physician count, total billing, median billing, and YoY change.
+- "How to Read This Map" collapsible info panel with specialty color legend, billing gradient explanation, and data source attribution.
+- Blue Book PDF pipeline (`run_pipeline.py`): parses all 11 Blue Book PDFs, deduplicates 20,167 physicians across years, and loads billing records into the database.
+- CPSBC registrant directory scraper (`scrape_cpsbc.py`): Playwright-based headless browser scraper with pagination, polite delays, rate limit detection, and resume support.
+- CPSBC enrichment pipeline (`enrich_cpsbc.py`): fuzzy-matches Blue Book names to CPSBC registrants, populating real specialties and practice cities.
+- Admin audit logging on `/admin/raw` endpoint with IP, token fingerprint, and timestamp.
+
+### Changed
+- Map takes 65% of viewport height (was ~50%). Data panel is scrollable below.
+- Billing ranges use 10k precision ("230k-240k") instead of 50k ("200k-250k").
+- Physician dots colored by billing amount when specialty is unknown (gradient from pink to dark red). Specialty colors used when CPSBC data provides real specialties.
+- Heatmap radius increased (25→40, blur 15→25) so it's visible at province-wide zoom.
+- Privacy config frozen after first load to prevent worker divergence in multi-process deployments.
+- Startup migration skips when the unique index already exists (avoids table locks on every restart).
+- Fiscal year validator rejects years outside 1900-2100 range.
+
+### Fixed
+- `billing_range()` returns None for negative/zero amounts instead of nonsense ranges.
+- Removed 6 duplicate test methods in TestYearParameterValidation that Python silently shadowed.
+- CPSBC scraper pagination: clicks NEXT PAGE in-page instead of navigating to URL (fixes lost session state).
+
 ## [0.2.1.0] - 2026-04-01
 
 QA pass: mobile responsive layout, accessibility fix, and FastAPI deprecation cleanup.
