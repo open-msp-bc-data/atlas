@@ -300,18 +300,37 @@ def main():
     with sync_playwright() as pw:
         for i, prefix in enumerate(remaining):
             print(f"[{prefix}] Searching prefix {i+1}/{len(remaining)}...")
-            start = time.time()
 
-            results = scrape_prefix(prefix, pw)
-            elapsed = time.time() - start
+            # Retry loop: back off and retry on rate limits instead of bailing
+            max_retries = 3
+            results = []
+            for attempt in range(max_retries):
+                start = time.time()
+                results = scrape_prefix(prefix, pw)
+                elapsed = time.time() - start
 
-            # Track consecutive empty results (possible rate limiting)
-            if len(results) == 0 and elapsed > 25:
+                if len(results) > 0 or elapsed < 10:
+                    # Got results, or fast empty response (legitimately no matches)
+                    break
+
+                # Slow empty response = likely rate limited
+                if attempt < max_retries - 1:
+                    backoff = RATE_LIMIT_BACKOFF * (attempt + 1)
+                    print(f"    Rate limited on '{prefix}' (attempt {attempt+1}/{max_retries}). "
+                          f"Sleeping {backoff:.0f}s...")
+                    time.sleep(backoff)
+
+            # Track consecutive rate-limit failures
+            was_rate_limited = len(results) == 0 and elapsed >= 10
+            if was_rate_limited:
                 consecutive_errors += 1
                 if consecutive_errors >= MAX_CONSECUTIVE_ERRORS:
-                    print(f"\n{MAX_CONSECUTIVE_ERRORS} consecutive failures. Likely rate-limited.")
+                    print(f"\n{MAX_CONSECUTIVE_ERRORS} consecutive rate-limit failures after retries.")
                     print(f"Resume later with: python -m pipeline.scrape_cpsbc --resume")
                     break
+                # Don't mark rate-limited prefixes as completed
+                print(f"[{prefix}] Skipped (rate limited after {max_retries} attempts)")
+                continue
             else:
                 consecutive_errors = 0
 
