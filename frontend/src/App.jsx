@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import PhysicianMap from './components/PhysicianMap';
 import FilterPanel from './components/FilterPanel';
 import DataPanel from './components/DataPanel';
+import PerCapitaTable from './components/PerCapitaTable';
 import TrendPanel from './components/TrendPanel';
 import { fetchPhysicians, fetchAggregations, fetchHeatmap } from './api';
 import './App.css';
@@ -214,6 +215,7 @@ function App() {
           />
 
           <DataPanel aggregations={aggregations} year={filters.year} mapBounds={mapBounds} />
+          <PerCapitaTable aggregations={aggregations} year={filters.year} />
         </main>
       </div>
 
