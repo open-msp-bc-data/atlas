@@ -1,81 +1,92 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { fetchPhysicians, fetchAggregations, fetchHeatmap, fetchTrend } from '../api';
+
+const mockData = {
+  physicians: [
+    {
+      pseudo_id: 'PHY-ABC', specialty_group: 'General Practice',
+      lat_approx: 49.28, lng_approx: -123.12, city: 'Vancouver',
+      health_authority: 'Vancouver Coastal Health',
+      latest_billing_range: '230k\u2013240k', yoy_change: 0.05,
+      billing_years: [
+        { year: '2023-2024', billing_range: '230k\u2013240k' },
+        { year: '2022-2023', billing_range: '220k\u2013230k' },
+      ],
+    },
+    {
+      pseudo_id: 'PHY-DEF', specialty_group: 'Surgery',
+      lat_approx: 49.88, lng_approx: -119.50, city: 'Kelowna',
+      health_authority: 'Interior Health',
+      latest_billing_range: '500k\u2013510k', yoy_change: -0.02,
+      billing_years: [{ year: '2023-2024', billing_range: '500k\u2013510k' }],
+    },
+  ],
+  aggregations: {
+    '2023-2024': [{ geo_name: 'Vancouver', n_physicians: 500, total_payments: 150000000 }],
+  },
+  years: ['2022-2023', '2023-2024'],
+};
 
 beforeEach(() => {
-  vi.restoreAllMocks();
+  vi.resetModules();
+  global.fetch = vi.fn(() =>
+    Promise.resolve({ ok: true, json: () => Promise.resolve(JSON.parse(JSON.stringify(mockData))) })
+  );
 });
 
-function mockFetch(data, ok = true, status = 200) {
-  global.fetch = vi.fn(() =>
-    Promise.resolve({
-      ok,
-      status,
-      json: () => Promise.resolve(data),
-    })
-  );
-}
-
 describe('fetchPhysicians', () => {
-  it('returns array of physicians', async () => {
-    mockFetch([{ pseudo_id: 'PHY-ABC' }]);
-    const result = await fetchPhysicians({ year: '2023-2024' });
-    expect(result).toEqual([{ pseudo_id: 'PHY-ABC' }]);
-    expect(fetch).toHaveBeenCalledWith('/physicians?year=2023-2024');
+  it('returns physicians from static data', async () => {
+    const { fetchPhysicians } = await import('../api');
+    const result = await fetchPhysicians({});
+    expect(result).toHaveLength(2);
+    expect(result[0].pseudo_id).toBe('PHY-ABC');
   });
 
-  it('returns empty array for suppression response', async () => {
-    mockFetch({ suppressed: true, reason: 'query_k_anonymity' });
-    const result = await fetchPhysicians({ city: 'SmallTown' });
-    expect(result).toEqual([]);
+  it('filters by year', async () => {
+    const { fetchPhysicians } = await import('../api');
+    const result = await fetchPhysicians({ year: '2022-2023' });
+    expect(result).toHaveLength(1);
+    expect(result[0].pseudo_id).toBe('PHY-ABC');
   });
 
-  it('throws on non-array non-suppression response', async () => {
-    mockFetch({ unexpected: true });
-    await expect(fetchPhysicians()).rejects.toThrow('Unexpected response format');
-  });
-
-  it('throws on HTTP error', async () => {
-    mockFetch(null, false, 500);
-    await expect(fetchPhysicians()).rejects.toThrow('API error: 500');
+  it('respects limit', async () => {
+    const { fetchPhysicians } = await import('../api');
+    const result = await fetchPhysicians({ limit: 1 });
+    expect(result).toHaveLength(1);
   });
 });
 
 describe('fetchAggregations', () => {
-  it('returns aggregation data', async () => {
-    mockFetch([{ geo_name: 'Vancouver', total_payments: 1000000 }]);
+  it('returns aggregations for a year', async () => {
+    const { fetchAggregations } = await import('../api');
     const result = await fetchAggregations({ fiscal_year: '2023-2024' });
-    expect(result).toEqual([{ geo_name: 'Vancouver', total_payments: 1000000 }]);
+    expect(result).toHaveLength(1);
+    expect(result[0].geo_name).toBe('Vancouver');
   });
 
-  it('throws on HTTP error', async () => {
-    mockFetch(null, false, 404);
-    await expect(fetchAggregations()).rejects.toThrow('API error: 404');
+  it('returns empty for unknown year', async () => {
+    const { fetchAggregations } = await import('../api');
+    const result = await fetchAggregations({ fiscal_year: '1999-2000' });
+    expect(result).toEqual([]);
   });
 });
 
 describe('fetchHeatmap', () => {
-  it('returns heatmap cells', async () => {
-    mockFetch([{ lat: 49.28, lng: -123.12, intensity: 5000 }]);
-    const result = await fetchHeatmap({ year: '2023-2024' });
-    expect(result[0].lat).toBe(49.28);
-  });
-
-  it('throws on HTTP error', async () => {
-    mockFetch(null, false, 422);
-    await expect(fetchHeatmap({ year: 'invalid' })).rejects.toThrow('API error: 422');
+  it('returns empty in static mode', async () => {
+    const { fetchHeatmap } = await import('../api');
+    expect(await fetchHeatmap()).toEqual([]);
   });
 });
 
 describe('fetchTrend', () => {
-  it('returns trend data for a physician', async () => {
-    mockFetch({ pseudo_id: 'PHY-ABC', data: [{ year: '2023-2024', billing_range: '200k-210k' }] });
+  it('returns trend for known physician', async () => {
+    const { fetchTrend } = await import('../api');
     const result = await fetchTrend('PHY-ABC');
     expect(result.pseudo_id).toBe('PHY-ABC');
-    expect(result.data).toHaveLength(1);
+    expect(result.data).toHaveLength(2);
   });
 
-  it('throws on 404 for unknown physician', async () => {
-    mockFetch(null, false, 404);
-    await expect(fetchTrend('PHY-UNKNOWN')).rejects.toThrow('API error: 404');
+  it('throws for unknown physician', async () => {
+    const { fetchTrend } = await import('../api');
+    await expect(fetchTrend('PHY-UNKNOWN')).rejects.toThrow('Physician not found');
   });
 });
