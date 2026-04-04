@@ -67,6 +67,7 @@ export default function PhysicianMap({
   heatmapData,
   showHeatmap,
   onSelectPhysician,
+  onBoundsChange,
 }) {
   const mapRef = useRef(null);
   const mapInstance = useRef(null);
@@ -91,7 +92,27 @@ export default function PhysicianMap({
 
     mapInstance.current = map;
 
+    // Emit bounds on viewport change (debounced)
+    let boundsTimer = null;
+    function emitBounds() {
+      clearTimeout(boundsTimer);
+      boundsTimer = setTimeout(() => {
+        if (!onBoundsChange) return;
+        const b = map.getBounds();
+        onBoundsChange({
+          north: b.getNorth(),
+          south: b.getSouth(),
+          east: b.getEast(),
+          west: b.getWest(),
+        });
+      }, 300);
+    }
+    map.on('moveend', emitBounds);
+    emitBounds();
+
     return () => {
+      clearTimeout(boundsTimer);
+      map.off('moveend', emitBounds);
       map.remove();
       mapInstance.current = null;
     };

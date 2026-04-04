@@ -1,4 +1,32 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+
+// City centroids for viewport filtering (matches backend/pipeline/geocode.py)
+const CITY_CENTROIDS = {
+  'Vancouver': [49.2827, -123.1207], 'Victoria': [48.4284, -123.3656],
+  'Surrey': [49.1913, -122.8490], 'Burnaby': [49.2488, -122.9805],
+  'Richmond': [49.1666, -123.1336], 'Kelowna': [49.8880, -119.4960],
+  'Kamloops': [50.6745, -120.3273], 'Nanaimo': [49.1659, -123.9401],
+  'Prince George': [53.9171, -122.7497], 'Chilliwack': [49.1579, -121.9514],
+  'Abbotsford': [49.0504, -122.3045], 'Langley': [49.1044, -122.6609],
+  'Courtenay': [49.6878, -124.9936], 'Cranbrook': [49.5097, -115.7688],
+  'Penticton': [49.4991, -119.5937], 'Vernon': [50.2671, -119.2720],
+  'Campbell River': [50.0163, -125.2442], 'New Westminster': [49.2057, -122.9110],
+  'North Vancouver': [49.3200, -123.0724], 'West Vancouver': [49.3280, -123.1607],
+  'Coquitlam': [49.2838, -122.7932], 'Port Moody': [49.2783, -122.8602],
+  'Maple Ridge': [49.2193, -122.5984], 'White Rock': [49.0253, -122.8026],
+  'Trail': [49.0966, -117.7113], 'Nelson': [49.4928, -117.2948],
+  'Terrace': [54.5162, -128.5969], 'Fort St John': [56.2465, -120.8476],
+  'Dawson Creek': [55.7596, -120.2353], 'Williams Lake': [52.1417, -122.1417],
+  'Quesnel': [52.9784, -122.4927], 'Powell River': [49.8352, -124.5247],
+};
+
+function isInBounds(geoName, bounds) {
+  if (!bounds) return true;
+  const coords = CITY_CENTROIDS[geoName];
+  if (!coords) return true; // unknown city, show it
+  const [lat, lng] = coords;
+  return lat >= bounds.south && lat <= bounds.north && lng >= bounds.west && lng <= bounds.east;
+}
 
 function formatCurrency(value) {
   if (value == null) return '—';
@@ -30,7 +58,7 @@ const COLUMNS = [
   { key: 'yoy_change',  label: 'YoY Change',      sortKey: 'yoy_change',     numeric: true  },
 ];
 
-export default function DataPanel({ aggregations, year }) {
+export default function DataPanel({ aggregations, year, mapBounds }) {
   const [sortKey, setSortKey] = useState('total_payments');
   const [sortDir, setSortDir] = useState('desc');
 
@@ -47,8 +75,11 @@ export default function DataPanel({ aggregations, year }) {
     }
   }
 
-  const rows = aggregations
-    .filter((a) => !a.suppressed)
+  const allRows = aggregations.filter((a) => !a.suppressed);
+  const inView = mapBounds ? allRows.filter((a) => isInBounds(a.geo_name, mapBounds)) : allRows;
+  const isFiltered = mapBounds && inView.length < allRows.length;
+
+  const rows = inView
     .sort((a, b) => {
       const av = a[sortKey];
       const bv = b[sortKey];
@@ -82,7 +113,10 @@ export default function DataPanel({ aggregations, year }) {
         <h3>Regional Aggregations</h3>
         <p className="data-panel-caption">
           Physician billing totals by city for fiscal year {year}.
-          Showing {rows.length} regions — {totalPhysicians.toLocaleString()} physicians — {formatCurrency(totalBilling)} total.
+          {isFiltered
+            ? `Showing ${rows.length} of ${allRows.length} regions in view`
+            : `Showing all ${rows.length} regions`}
+          {' — '}{totalPhysicians.toLocaleString()} physicians — {formatCurrency(totalBilling)} total.
           Groups with fewer than 5 physicians are suppressed.
         </p>
       </div>

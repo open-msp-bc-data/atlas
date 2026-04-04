@@ -91,6 +91,7 @@ function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedPhysician, setSelectedPhysician] = useState(null);
+  const [mapBounds, setMapBounds] = useState(null);
   const [infoOpen, setInfoOpen] = useState(false);
 
   // Filters — specialty/city/health_authority are now arrays (multi-select)
@@ -209,9 +210,10 @@ function App() {
             heatmapData={heatmapData}
             showHeatmap={filters.showHeatmap}
             onSelectPhysician={setSelectedPhysician}
+            onBoundsChange={setMapBounds}
           />
 
-          <DataPanel aggregations={aggregations} year={filters.year} />
+          <DataPanel aggregations={aggregations} year={filters.year} mapBounds={mapBounds} />
         </main>
       </div>
 
