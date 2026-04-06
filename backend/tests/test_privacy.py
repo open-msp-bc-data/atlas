@@ -156,3 +156,20 @@ class TestBillingRange:
 
     def test_custom_step(self):
         assert billing_range(237_000, step=100_000) == "200k\u2013300k"
+
+    def test_none_returns_none(self):
+        assert billing_range(None) is None
+
+    def test_zero_returns_none(self):
+        assert billing_range(0) is None
+
+    def test_negative_returns_none(self):
+        assert billing_range(-50_000) is None
+
+
+class TestPseudoIdSaltFromEnv:
+    def test_uses_env_salt(self, monkeypatch):
+        monkeypatch.setenv("PRIVACY_SALT", "env-salt-value")
+        pid = deterministic_pseudo_id("Dr. Test")
+        expected = deterministic_pseudo_id("Dr. Test", salt="env-salt-value")
+        assert pid == expected

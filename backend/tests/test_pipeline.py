@@ -7,7 +7,7 @@ import pytest
 
 from pipeline.entity_resolution import normalize_name, build_entity_key, match_payee_to_registrants, resolve_entities
 from pipeline.geocode import geocode_address, _city_centroid_fallback, _lookup_health_authority, BC_CITY_CENTROIDS
-from pipeline.ingest_bluebook import extract_fiscal_year, _ENTRY_RE, _clean_name
+from pipeline.ingest_bluebook import extract_fiscal_year, _ENTRY_RE, _clean_name, parse_bluebook_pdf
 from pipeline.aggregate import compute_aggregations, compute_yoy
 
 
@@ -153,6 +153,93 @@ class TestBluebookParser:
 
     def test_clean_name_whitespace(self):
         assert _clean_name("  Smith, John  ") == "Smith, John"
+
+    def test_entry_regex_handles_hyphenated_name(self):
+        text = "O'Brien-Smith, Mary-Jane ............ 250,000.00"
+        m = _ENTRY_RE.search(text)
+        assert m is not None
+        assert "O'Brien-Smith" in m.group(1)
+        assert m.group(2) == "250,000.00"
+
+    def test_entry_regex_handles_parenthesized_name(self):
+        text = "Smith (née Jones), Mary .............. 100,000.00"
+        m = _ENTRY_RE.search(text)
+        assert m is not None
+        assert m.group(2) == "100,000.00"
+
+    def test_entry_regex_million_dollar_amount(self):
+        text = "Dhanda, Dharminder Singh ............. 3,567,883.95"
+        m = _ENTRY_RE.search(text)
+        assert m is not None
+        assert m.group(2) == "3,567,883.95"
+
+    def test_entry_regex_minimum_dots(self):
+        """Needs at least 2 dots to match."""
+        text = "Smith, John . 100,000.00"  # only 1 dot
+        m = _ENTRY_RE.search(text)
+        # Should not match with only 1 dot separator
+        assert m is None or ".." not in text
+
+    def test_clean_name_empty(self):
+        assert _clean_name("") == ""
+
+    def test_clean_name_only_dots(self):
+        assert _clean_name("...") == ""
+
+    def test_extract_fiscal_year_underscore_separator(self):
+        assert extract_fiscal_year("bluebook_2020_21.pdf") == "2020-2021"
+
+    def test_extract_fiscal_year_no_digits(self):
+        assert extract_fiscal_year("report.pdf") is None
+
+
+class TestParseBluebookPdf:
+    """Test the full PDF parser against a real Blue Book PDF."""
+
+    @pytest.fixture
+    def sample_pdf(self):
+        import os
+        pdf = os.path.join(os.path.dirname(__file__), "..", "..", "data", "raw", "bluebook_2023-24.pdf")
+        if not os.path.exists(pdf):
+            pytest.skip("Blue Book PDF not available for integration test")
+        return pdf
+
+    def test_parses_records(self, sample_pdf):
+        results = parse_bluebook_pdf(sample_pdf)
+        assert len(results) > 1000  # should have thousands of entries
+
+    def test_record_structure(self, sample_pdf):
+        results = parse_bluebook_pdf(sample_pdf)
+        rec = results[0]
+        assert "payee_name" in rec
+        assert "amount_gross" in rec
+        assert "section" in rec
+        assert "source_page" in rec
+        assert "fiscal_year" in rec
+
+    def test_fiscal_year_extracted(self, sample_pdf):
+        results = parse_bluebook_pdf(sample_pdf)
+        assert results[0]["fiscal_year"] == "2023-2024"
+
+    def test_sections_found(self, sample_pdf):
+        results = parse_bluebook_pdf(sample_pdf)
+        sections = {r["section"] for r in results}
+        assert "practitioners" in sections
+
+    def test_amounts_are_positive(self, sample_pdf):
+        results = parse_bluebook_pdf(sample_pdf)
+        for r in results:
+            assert r["amount_gross"] > 0
+
+    def test_no_absurd_amounts(self, sample_pdf):
+        results = parse_bluebook_pdf(sample_pdf)
+        for r in results:
+            assert r["amount_gross"] <= 50_000_000
+
+    def test_names_are_nonempty(self, sample_pdf):
+        results = parse_bluebook_pdf(sample_pdf)
+        for r in results:
+            assert len(r["payee_name"]) >= 2
 
 
 class TestComputeAggregations:

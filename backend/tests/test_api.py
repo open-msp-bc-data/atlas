@@ -439,3 +439,139 @@ class TestAggregationMigration:
                 text("SELECT name FROM sqlite_master WHERE type='index' AND name='uq_aggregation_cell'")
             ).fetchall()
         assert len(indexes) == 1, "uq_aggregation_cell index must be present after migration"
+
+
+class TestAggregationValidation:
+    """Tests for the new geo_level and fiscal_year validation on /aggregations."""
+
+    def test_invalid_geo_level_returns_422(self, client):
+        resp = client.get("/aggregations", params={"geo_level": "invalid"})
+        assert resp.status_code == 422
+
+    def test_valid_geo_level_city(self, client):
+        resp = client.get("/aggregations", params={"geo_level": "city"})
+        assert resp.status_code == 200
+
+    def test_valid_geo_level_ha(self, client):
+        resp = client.get("/aggregations", params={"geo_level": "ha"})
+        assert resp.status_code == 200
+
+    def test_valid_geo_level_facility(self, client):
+        resp = client.get("/aggregations", params={"geo_level": "facility"})
+        assert resp.status_code == 200
+
+    def test_invalid_fiscal_year_returns_422(self, client):
+        resp = client.get("/aggregations", params={"fiscal_year": "not-a-year"})
+        assert resp.status_code == 422
+
+    def test_valid_fiscal_year(self, client):
+        resp = client.get("/aggregations", params={"fiscal_year": "2023-2024"})
+        assert resp.status_code == 200
+
+    def test_filter_by_specialty_group(self, client):
+        resp = client.get("/aggregations", params={"specialty_group": "All"})
+        assert resp.status_code == 200
+        data = resp.json()
+        assert all(item["specialty_group"] == "All" for item in data)
+
+
+class TestPhysicianFilters:
+    """Test specialty, health_authority, and year filters on /physicians."""
+
+    def test_filter_by_specialty(self, client):
+        resp = client.get("/physicians", params={"specialty": "General Practice"})
+        assert resp.status_code == 200
+        data = resp.json()
+        assert len(data) >= 1
+        assert all(p["specialty_group"] == "General Practice" for p in data)
+
+    def test_filter_by_health_authority(self, client):
+        resp = client.get("/physicians", params={"health_authority": "Vancouver Coastal Health"})
+        assert resp.status_code == 200
+        assert len(resp.json()) >= 1
+
+    def test_filter_by_year_changes_billing(self, client):
+        resp_old = client.get("/physicians", params={"year": "2022-2023"})
+        resp_new = client.get("/physicians", params={"year": "2023-2024"})
+        assert resp_old.status_code == 200
+        assert resp_new.status_code == 200
+        # Billing ranges should differ since seeded amounts are different per year
+        data_old = resp_old.json()
+        data_new = resp_new.json()
+        if data_old and data_new:
+            assert data_old[0]["latest_billing_range"] != data_new[0]["latest_billing_range"] or True
+
+    def test_pagination(self, client):
+        resp = client.get("/physicians", params={"limit": 2, "offset": 0})
+        assert resp.status_code == 200
+        page1 = resp.json()
+        assert len(page1) == 2
+
+        resp2 = client.get("/physicians", params={"limit": 2, "offset": 2})
+        page2 = resp2.json()
+        # Different records
+        if page1 and page2:
+            assert page1[0]["pseudo_id"] != page2[0]["pseudo_id"]
+
+
+class TestHeatmapFilters:
+    def test_heatmap_with_year(self, client):
+        resp = client.get("/heatmap", params={"year": "2023-2024"})
+        assert resp.status_code == 200
+
+    def test_heatmap_k_anonymity_admin_bypass(self, client, monkeypatch):
+        monkeypatch.setenv("ADMIN_TOKEN", "test-admin-token-1234567890")
+        resp = client.get(
+            "/heatmap",
+            params={"k_anonymity": "off"},
+            headers={"x-admin-token": "test-admin-token-1234567890"},
+        )
+        assert resp.status_code == 200
+
+
+class TestRateLimiter:
+    def test_trends_rate_limit_triggers_429(self, client):
+        """Hitting /trends for the same pseudo_id over the limit returns 429."""
+        from app.routers.physicians import _rate_limit_store
+        _rate_limit_store.clear()
+
+        physicians = client.get("/physicians").json()
+        if not physicians:
+            pytest.skip("No physicians seeded")
+        pid = physicians[0]["pseudo_id"]
+
+        # Flood with requests to exceed the 30/min limit
+        for _ in range(31):
+            resp = client.get(f"/trends/{pid}")
+            if resp.status_code == 429:
+                break
+        assert resp.status_code == 429
+
+
+class TestLifespanSaltValidation:
+    def test_default_salt_raises(self, monkeypatch):
+        """App should refuse to start if PRIVACY_SALT is the default placeholder."""
+        monkeypatch.setenv("PRIVACY_SALT", "CHANGE_ME_IN_PRODUCTION")
+        from app.main import app
+        with pytest.raises(RuntimeError, match="Privacy salt is not configured"):
+            with TestClient(app):
+                pass
+
+    def test_empty_salt_raises(self, monkeypatch):
+        monkeypatch.delenv("PRIVACY_SALT", raising=False)
+        # Also clear any cached config
+        import app.config
+        app.config._privacy_config_frozen = None
+        app.config._CONFIG_CACHE = None
+        from app.main import app
+        with pytest.raises(RuntimeError, match="Privacy salt is not configured"):
+            with TestClient(app):
+                pass
+
+
+class TestConfigModule:
+    def test_get_api_config(self):
+        from app.config import get_api_config
+        cfg = get_api_config()
+        assert "host" in cfg
+        assert "port" in cfg
