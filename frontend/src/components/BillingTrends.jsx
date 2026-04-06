@@ -120,8 +120,8 @@ function SpendingTrends({ data }) {
         <ResponsiveContainer width="100%" height={200}>
           <LineChart data={trends}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="year_short" tick={{ fontSize: 11 }} />
-            <YAxis tickFormatter={(v) => `$${v.toFixed(1)}B`} tick={{ fontSize: 11 }} />
+            <XAxis dataKey="year_short" tick={{ fontSize: 12 }} />
+            <YAxis tickFormatter={(v) => `$${v.toFixed(1)}B`} tick={{ fontSize: 12 }} />
             <Tooltip formatter={(v) => [`$${v.toFixed(2)}B`, 'Total']} />
             <Line type="monotone" dataKey="total_b" stroke={ACCENT} strokeWidth={2} dot={{ r: 3 }} />
           </LineChart>
@@ -133,8 +133,8 @@ function SpendingTrends({ data }) {
         <ResponsiveContainer width="100%" height={200}>
           <BarChart data={trends}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="year_short" tick={{ fontSize: 11 }} />
-            <YAxis tickFormatter={(v) => `$${v}k`} tick={{ fontSize: 11 }} />
+            <XAxis dataKey="year_short" tick={{ fontSize: 12 }} />
+            <YAxis tickFormatter={(v) => `$${v}k`} tick={{ fontSize: 12 }} />
             <Tooltip formatter={(v) => [`$${v.toFixed(0)}k`, 'Median']} />
             <Bar dataKey="median_k" fill={ACCENT_LIGHT} radius={0} />
           </BarChart>
@@ -146,8 +146,8 @@ function SpendingTrends({ data }) {
         <ResponsiveContainer width="100%" height={200}>
           <BarChart data={trends}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="year_short" tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} tickFormatter={(v) => v.toLocaleString()} />
+            <XAxis dataKey="year_short" tick={{ fontSize: 12 }} />
+            <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => v.toLocaleString()} />
             <Tooltip formatter={(v) => [v.toLocaleString(), 'Practitioners']} />
             <Bar dataKey="n_practitioners" fill="#6B7280" radius={0} />
           </BarChart>
@@ -185,8 +185,8 @@ function InequalityPanel({ data }) {
         <ResponsiveContainer width="100%" height={200}>
           <LineChart data={giniData}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="year_short" tick={{ fontSize: 11 }} />
-            <YAxis domain={[0.38, 0.46]} tick={{ fontSize: 11 }} tickFormatter={(v) => v.toFixed(2)} />
+            <XAxis dataKey="year_short" tick={{ fontSize: 12 }} />
+            <YAxis domain={[0.38, 0.46]} tick={{ fontSize: 12 }} tickFormatter={(v) => v.toFixed(2)} />
             <Tooltip formatter={(v) => [v.toFixed(4), 'Gini']} />
             <Line type="monotone" dataKey="gini" stroke={ACCENT} strokeWidth={2} dot={{ r: 3 }} />
           </LineChart>
@@ -230,8 +230,8 @@ function InequalityPanel({ data }) {
           <ResponsiveContainer width="100%" height={200}>
             <LineChart data={paretoYearly}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="year_short" tick={{ fontSize: 11 }} />
-              <YAxis domain={[30, 45]} tickFormatter={(v) => `${v}%`} tick={{ fontSize: 11 }} />
+              <XAxis dataKey="year_short" tick={{ fontSize: 12 }} />
+              <YAxis domain={[30, 45]} tickFormatter={(v) => `${v}%`} tick={{ fontSize: 12 }} />
               <Tooltip formatter={(v) => [`${v}%`, 'Top 10% share']} />
               <Line type="monotone" dataKey="top_10_pct" stroke={ACCENT} strokeWidth={2} dot={{ r: 3 }} />
             </LineChart>
@@ -255,8 +255,8 @@ function InequalityPanel({ data }) {
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={pctData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="label" tick={{ fontSize: 11 }} />
-                <YAxis tickFormatter={(v) => `$${v}k`} tick={{ fontSize: 11 }} />
+                <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+                <YAxis tickFormatter={(v) => `$${v}k`} tick={{ fontSize: 12 }} />
                 <Tooltip formatter={(v) => [`$${v.toFixed(0)}k`, 'Billing']} />
                 <Bar dataKey="value" radius={0}>
                   {pctData.map((_, i) => (
@@ -295,8 +295,8 @@ function TurnoverPanel({ data }) {
         <ResponsiveContainer width="100%" height={250}>
           <BarChart data={turnover}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="year_short" tick={{ fontSize: 11 }} />
-            <YAxis tick={{ fontSize: 11 }} />
+            <XAxis dataKey="year_short" tick={{ fontSize: 12 }} />
+            <YAxis tick={{ fontSize: 12 }} />
             <Tooltip />
             <Legend />
             <Bar dataKey="new_entrants" fill={SUCCESS} name="New Entrants" radius={0} />
@@ -311,8 +311,8 @@ function TurnoverPanel({ data }) {
         <ResponsiveContainer width="100%" height={200}>
           <LineChart data={turnover.filter((t) => t.retention_pct != null)}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="year_short" tick={{ fontSize: 11 }} />
-            <YAxis domain={[80, 100]} tick={{ fontSize: 11 }} tickFormatter={(v) => `${v}%`} />
+            <XAxis dataKey="year_short" tick={{ fontSize: 12 }} />
+            <YAxis domain={[80, 100]} tick={{ fontSize: 12 }} tickFormatter={(v) => `${v}%`} />
             <Tooltip formatter={(v) => [`${v}%`, 'Retention']} />
             <Line type="monotone" dataKey="retention_pct" stroke={SUCCESS} strokeWidth={2} dot={{ r: 3 }} />
           </LineChart>
@@ -326,8 +326,8 @@ function TurnoverPanel({ data }) {
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={yoy}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="year_short" tick={{ fontSize: 11 }} />
-              <YAxis tickFormatter={(v) => `${v}%`} tick={{ fontSize: 11 }} />
+              <XAxis dataKey="year_short" tick={{ fontSize: 12 }} />
+              <YAxis tickFormatter={(v) => `${v}%`} tick={{ fontSize: 12 }} />
               <Tooltip
                 formatter={(v, name) => [`${v.toFixed(1)}%`, name === 'median_yoy' ? 'Median' : name]}
                 labelFormatter={(l) => {
@@ -369,7 +369,7 @@ function DistributionPanel({ data }) {
           <BarChart data={brackets}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="label" tick={{ fontSize: 10 }} />
-            <YAxis tick={{ fontSize: 11 }} />
+            <YAxis tick={{ fontSize: 12 }} />
             <Tooltip formatter={(v) => [v.toLocaleString(), 'Physicians']} />
             <Bar dataKey="count" fill={ACCENT_LIGHT} name="Physicians" radius={0} />
           </BarChart>
@@ -382,7 +382,7 @@ function DistributionPanel({ data }) {
           <BarChart data={brackets}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="label" tick={{ fontSize: 10 }} />
-            <YAxis tickFormatter={(v) => `${v}%`} tick={{ fontSize: 11 }} />
+            <YAxis tickFormatter={(v) => `${v}%`} tick={{ fontSize: 12 }} />
             <Tooltip formatter={(v) => [`${v}%`, '% of Total']} />
             <Bar dataKey="pct_of_billing" fill={ACCENT} name="% of Billing" radius={0} />
           </BarChart>
@@ -399,7 +399,7 @@ function DistributionPanel({ data }) {
             <BarChart data={drift} stackOffset="none">
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="year_short" tick={{ fontSize: 10 }} />
-              <YAxis tickFormatter={(v) => `$${v.toFixed(1)}B`} tick={{ fontSize: 11 }} />
+              <YAxis tickFormatter={(v) => `$${v.toFixed(1)}B`} tick={{ fontSize: 12 }} />
               <Tooltip formatter={(v) => [`$${v.toFixed(2)}B`]} />
               <Legend />
               <Bar dataKey="prac_b" stackId="a" fill={ACCENT_LIGHT} name="Practitioners" radius={0} />
