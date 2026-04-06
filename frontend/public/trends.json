@@ -1,11 +1,13 @@
 {
   "generated": "2026-04-06",
   "source": "BC MSP Blue Book PDFs (2011-2024)",
-  "n_fiscal_years": 11,
+  "n_fiscal_years": 13,
   "years": [
     "2011-2012",
+    "2012-2013",
     "2013-2014",
     "2014-2015",
+    "2015-2016",
     "2016-2017",
     "2017-2018",
     "2018-2019",
@@ -25,6 +27,14 @@
       "max_billing": 2856997
     },
     {
+      "year": "2012-2013",
+      "n_practitioners": 9767,
+      "total_billing": 2477685277,
+      "mean_billing": 253679,
+      "median_billing": 210415,
+      "max_billing": 2985821
+    },
+    {
       "year": "2013-2014",
       "n_practitioners": 10224,
       "total_billing": 2625401742,
@@ -39,6 +49,14 @@
       "mean_billing": 258782,
       "median_billing": 210795,
       "max_billing": 3363980
+    },
+    {
+      "year": "2015-2016",
+      "n_practitioners": 10679,
+      "total_billing": 2770377361,
+      "mean_billing": 259423,
+      "median_billing": 212139,
+      "max_billing": 3306401
     },
     {
       "year": "2016-2017",
@@ -117,6 +135,16 @@
       "p99": 994622
     },
     {
+      "year": "2012-2013",
+      "gini": 0.4126,
+      "p10": 50304,
+      "p25": 101990,
+      "p50": 210415,
+      "p75": 343863,
+      "p90": 496931,
+      "p99": 1004589
+    },
+    {
       "year": "2013-2014",
       "gini": 0.4196,
       "p10": 49697,
@@ -135,6 +163,16 @@
       "p75": 355334,
       "p90": 512377,
       "p99": 1010364
+    },
+    {
+      "year": "2015-2016",
+      "gini": 0.4226,
+      "p10": 50542,
+      "p25": 100808,
+      "p50": 212139,
+      "p75": 353668,
+      "p90": 509671,
+      "p99": 1045425
     },
     {
       "year": "2016-2017",
@@ -227,33 +265,49 @@
       "retention_pct": null
     },
     {
+      "year": "2012-2013",
+      "total": 9767,
+      "new_entrants": 829,
+      "exits": 584,
+      "retained": 8938,
+      "retention_pct": 93.9
+    },
+    {
       "year": "2013-2014",
       "total": 10224,
-      "new_entrants": 1550,
-      "exits": 848,
-      "retained": 8674,
-      "retention_pct": 91.1
+      "new_entrants": 855,
+      "exits": 517,
+      "retained": 9250,
+      "retention_pct": 94.7
     },
     {
       "year": "2014-2015",
       "total": 10453,
-      "new_entrants": 1756,
+      "new_entrants": 1733,
       "exits": 1604,
       "retained": 8620,
       "retention_pct": 84.3
     },
     {
+      "year": "2015-2016",
+      "total": 10679,
+      "new_entrants": 823,
+      "exits": 738,
+      "retained": 9715,
+      "retention_pct": 92.9
+    },
+    {
       "year": "2016-2017",
       "total": 11127,
-      "new_entrants": 1622,
-      "exits": 1130,
-      "retained": 9323,
-      "retention_pct": 89.2
+      "new_entrants": 894,
+      "exits": 699,
+      "retained": 9980,
+      "retention_pct": 93.5
     },
     {
       "year": "2017-2018",
       "total": 11330,
-      "new_entrants": 934,
+      "new_entrants": 909,
       "exits": 862,
       "retained": 10265,
       "retention_pct": 92.3
@@ -261,7 +315,7 @@
     {
       "year": "2018-2019",
       "total": 11780,
-      "new_entrants": 904,
+      "new_entrants": 897,
       "exits": 739,
       "retained": 10591,
       "retention_pct": 93.5
@@ -269,7 +323,7 @@
     {
       "year": "2019-2020",
       "total": 12026,
-      "new_entrants": 798,
+      "new_entrants": 795,
       "exits": 754,
       "retained": 11026,
       "retention_pct": 93.6
@@ -277,7 +331,7 @@
     {
       "year": "2020-2021",
       "total": 12007,
-      "new_entrants": 844,
+      "new_entrants": 839,
       "exits": 1036,
       "retained": 10990,
       "retention_pct": 91.4
@@ -285,7 +339,7 @@
     {
       "year": "2021-2022",
       "total": 12500,
-      "new_entrants": 991,
+      "new_entrants": 989,
       "exits": 792,
       "retained": 11215,
       "retention_pct": 93.4
@@ -293,7 +347,7 @@
     {
       "year": "2022-2023",
       "total": 12020,
-      "new_entrants": 825,
+      "new_entrants": 822,
       "exits": 1515,
       "retained": 10985,
       "retention_pct": 87.9
@@ -357,29 +411,29 @@
   "pareto": [
     {
       "top_pct": 1,
-      "n_practitioners": 205,
+      "n_practitioners": 207,
       "billing_share": 8.0
     },
     {
       "top_pct": 5,
-      "n_practitioners": 1029,
-      "billing_share": 24.3
+      "n_practitioners": 1037,
+      "billing_share": 24.4
     },
     {
       "top_pct": 10,
-      "n_practitioners": 2058,
-      "billing_share": 38.5
+      "n_practitioners": 2074,
+      "billing_share": 38.7
     },
     {
       "top_pct": 20,
-      "n_practitioners": 4117,
-      "billing_share": 59.0
+      "n_practitioners": 4149,
+      "billing_share": 59.1
     },
     {
       "top_pct": 50,
-      "n_practitioners": 10293,
+      "n_practitioners": 10374,
       "billing_share": 89.4
     }
   ],
-  "total_unique_practitioners": 20587
+  "total_unique_practitioners": 20748
 }
