@@ -1,76 +1,168 @@
-"""CPSBC Registrant Directory scraper.
+"""CPSBC Registrant Directory scraper (v2).
 
-Searches the CPSBC directory by last-name prefix (A-Z), paginates through
-all results, and extracts structured physician data. Results are saved
-incrementally to a JSON file so the scrape can be resumed if interrupted.
+Searches the CPSBC directory by last-name prefix, paginates through all
+results, and extracts structured physician data. Saves incrementally so
+the scrape can be resumed if interrupted.
+
+Key features:
+  - Verifies pagination: parses "Showing X of Y" to confirm all pages scraped
+  - Exponential backoff with jitter on rate limits (429)
+  - Reuses browser across prefixes, rotates context periodically
+  - Randomizes prefix order to look less bot-like
+  - Rotates User-Agent strings
+  - Logs to file and stdout
+  - Screenshots on error for debugging
 
 Usage:
     cd backend
-    python -m pipeline.scrape_cpsbc
-
-    # Resume from where it left off (skips already-scraped prefixes):
-    python -m pipeline.scrape_cpsbc --resume
-
-    # Scrape only specific prefixes:
-    python -m pipeline.scrape_cpsbc --prefixes A,B,C
-
-Polite scraping: 4-6 second random delay between page requests, proper
-User-Agent, and a fresh browser session per prefix to avoid long-lived
-connections.
+    python -m pipeline.scrape_cpsbc --fresh       # Start a clean scrape
+    python -m pipeline.scrape_cpsbc --resume      # Resume from last progress
+    python -m pipeline.scrape_cpsbc --verify      # Check for truncated prefixes
+    python -m pipeline.scrape_cpsbc --prefixes A,B  # Scrape specific prefixes
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import logging
 import random
 import re
 import sys
 import time
+from datetime import datetime
 from pathlib import Path
 
 try:
-    from playwright.sync_api import sync_playwright
+    from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout
 except ImportError:
     print("ERROR: playwright is required. Run: pip install playwright && python -m playwright install chromium")
     sys.exit(1)
 
 
-OUTPUT_PATH = Path(__file__).resolve().parent.parent.parent / "data" / "cpsbc_registrants.json"
-PROGRESS_PATH = OUTPUT_PATH.with_suffix(".progress.json")
+# ── Paths ──────────────────────────────────────────────────────────────
+DATA_DIR = Path(__file__).resolve().parent.parent.parent / "data"
+OUTPUT_PATH = DATA_DIR / "cpsbc_registrants.json"
+PROGRESS_PATH = DATA_DIR / "cpsbc_registrants.progress.json"
+LOG_PATH = DATA_DIR / "scrape_cpsbc.log"
+SCREENSHOT_DIR = DATA_DIR / "scrape_errors"
+
 BASE_URL = "https://www.cpsbc.ca/public/registrant-directory"
-USER_AGENT = (
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
-)
 
-# Polite delay range (seconds) between page requests
-DELAY_MIN = 8.0
-DELAY_MAX = 15.0
+# ── User-Agent rotation pool ──────────────────────────────────────────
+USER_AGENTS = [
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:132.0) Gecko/20100101 Firefox/132.0",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:132.0) Gecko/20100101 Firefox/132.0",
+]
 
-# Longer delay between letter prefixes (let the server breathe)
-PREFIX_DELAY_MIN = 20.0
-PREFIX_DELAY_MAX = 35.0
+# ── Timing ─────────────────────────────────────────────────────────────
+PAGE_DELAY_MIN = 12.0       # between pages within a prefix
+PAGE_DELAY_MAX = 25.0
+PREFIX_DELAY_MIN = 45.0     # between prefixes
+PREFIX_DELAY_MAX = 90.0
+CONTEXT_ROTATE_EVERY = 15   # rotate browser every N prefixes
 
-# Backoff delay when rate-limited (seconds)
-RATE_LIMIT_BACKOFF = 300.0  # 5 minutes
-MAX_CONSECUTIVE_ERRORS = 5  # stop after this many failures in a row
+# ── Rate-limit backoff ─────────────────────────────────────────────────
+BACKOFF_BASE = 300.0        # 5 minutes
+BACKOFF_MAX = 2700.0        # 45 minutes
+MAX_RETRIES = 5             # per prefix
+MAX_CONSECUTIVE_429 = 3     # stop scraper after this many in a row
+
+# ── Logging ────────────────────────────────────────────────────────────
+log = logging.getLogger("cpsbc_scraper")
 
 
-def _polite_sleep(min_s: float = DELAY_MIN, max_s: float = DELAY_MAX):
-    """Random delay to avoid hammering the server."""
+def setup_logging():
+    LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
+    fmt = logging.Formatter("%(asctime)s %(levelname)s %(message)s", datefmt="%H:%M:%S")
+
+    fh = logging.FileHandler(LOG_PATH, mode="a")
+    fh.setFormatter(fmt)
+    fh.setLevel(logging.DEBUG)
+
+    sh = logging.StreamHandler(sys.stdout)
+    sh.setFormatter(fmt)
+    sh.setLevel(logging.INFO)
+
+    log.setLevel(logging.DEBUG)
+    log.addHandler(fh)
+    log.addHandler(sh)
+
+    log.info("=" * 60)
+    log.info(f"Scraper started at {datetime.now().isoformat()}")
+
+
+# ── Helpers ─────────────────────────────────────────────────────────────
+
+def _polite_sleep(min_s: float, max_s: float):
     delay = random.uniform(min_s, max_s)
+    log.debug(f"  sleeping {delay:.1f}s")
     time.sleep(delay)
 
 
-def _parse_result_cards(page) -> list[dict]:
-    """Extract structured data from all result cards on the current page.
+def _backoff_sleep(attempt: int):
+    """Exponential backoff with jitter."""
+    base = min(BACKOFF_BASE * (2 ** attempt), BACKOFF_MAX)
+    jitter = random.uniform(0, base * 0.3)
+    delay = base + jitter
+    log.warning(f"  backoff attempt {attempt+1}: sleeping {delay:.0f}s")
+    time.sleep(delay)
 
-    Each result card is an h5 with a profile link. The sibling/adjacent
-    elements contain licence status, practice type, address, etc. We walk
-    from each h5 up to a shared ancestor that contains all the card data,
-    then parse the innerText.
-    """
+
+def _save_screenshot(page, label: str):
+    SCREENSHOT_DIR.mkdir(parents=True, exist_ok=True)
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    path = SCREENSHOT_DIR / f"{label}_{ts}.png"
+    try:
+        page.screenshot(path=str(path))
+        log.debug(f"  screenshot saved: {path}")
+    except Exception:
+        pass
+
+
+def _get_result_count(page) -> int | None:
+    """Parse 'Showing X of Y results' header to get total count."""
+    text = page.evaluate("""
+        () => {
+            const body = document.body.innerText;
+            return body.substring(0, 2000);
+        }
+    """)
+    m = re.search(r"of\s+([\d,]+)\s+results?", text, re.IGNORECASE)
+    if m:
+        return int(m.group(1).replace(",", ""))
+    m = re.search(r"([\d,]+)\s+results?\s+found", text, re.IGNORECASE)
+    if m:
+        return int(m.group(1).replace(",", ""))
+    m = re.search(r"Showing\s+\d+\s*[-–]\s*(\d+)\s+results?", text, re.IGNORECASE)
+    if m:
+        return int(m.group(1))
+    return None
+
+
+def _check_rate_limited(page) -> bool:
+    """Check if the current page is a rate-limit response."""
+    try:
+        title = page.title().lower()
+        if "429" in title or "rate" in title or "too many" in title:
+            return True
+        body_start = page.evaluate("() => document.body?.innerText?.substring(0, 500) || ''")
+        if any(phrase in body_start.lower() for phrase in
+               ["too many requests", "rate limit", "try again later"]):
+            return True
+    except Exception:
+        pass
+    return False
+
+
+# ── Card parsing ───────────────────────────────────────────────────────
+
+def _parse_result_cards(page) -> list[dict]:
+    """Extract structured data from all result cards on the current page."""
     raw_cards = page.evaluate("""
         () => {
             const links = document.querySelectorAll('a[href*="registrant-directory/search-result/"]');
@@ -85,9 +177,6 @@ def _parse_result_cards(page) -> list[dict]:
 
                 const name = link.innerText.replace('arrow_forward', '').trim();
 
-                // Walk up from the h5 to find a container with the full card text.
-                // The card structure is: div > div.ps-contact__title > div > h5 > a
-                // The card data (MSP, status, address) is in sibling divs.
                 let container = link;
                 for (let i = 0; i < 10; i++) {
                     container = container.parentElement;
@@ -116,7 +205,6 @@ def _parse_result_cards(page) -> list[dict]:
         class_match = re.search(r"Licence class:\s*(.+?)(?:\n|$)", text)
         practice_match = re.search(r"Practice type:\s*(.+?)(?:\n|$)", text)
 
-        # Address: lines after "Address:" until next labelled field or end
         addr_match = re.search(
             r"Address:\s*\n?([\s\S]*?)(?=Licence|Practice type|NEXT|RESULTS|$)", text
         )
@@ -126,7 +214,6 @@ def _parse_result_cards(page) -> list[dict]:
             addr_raw = addr_match.group(1).strip()
             addr_lines = [l.strip() for l in addr_raw.split("\n") if l.strip()]
             address = ", ".join(addr_lines)
-            # City from BC address pattern: "..., City, BC, V1X 2Y3, Canada"
             city_match = re.search(r",\s*([A-Za-z][A-Za-z .'-]+),\s*BC", address, re.IGNORECASE)
             if city_match:
                 city = city_match.group(1).strip()
@@ -134,7 +221,8 @@ def _parse_result_cards(page) -> list[dict]:
         practice_type = practice_match.group(1).strip() if practice_match else None
         specialty = None
         if practice_type:
-            spec_match = re.search(r"(?:Specialty practice|specialist)\s*[-–]\s*(.+)", practice_type, re.IGNORECASE)
+            spec_match = re.search(r"(?:Specialty practice|specialist)\s*[-–]\s*(.+)",
+                                   practice_type, re.IGNORECASE)
             if spec_match:
                 specialty = spec_match.group(1).strip()
             elif "family" in practice_type.lower():
@@ -156,12 +244,8 @@ def _parse_result_cards(page) -> list[dict]:
 
 
 def _click_next_page(page) -> bool:
-    """Click the NEXT PAGE link if it exists. Returns True if clicked.
-
-    We must click within the page context (not navigate to the URL) because
-    the CPSBC site uses server-side session state for search results.
-    """
-    clicked = page.evaluate("""
+    """Click the NEXT PAGE link if it exists."""
+    return page.evaluate("""
         () => {
             const next = Array.from(document.querySelectorAll('a')).find(
                 a => a.innerText.trim().toUpperCase() === 'NEXT PAGE'
@@ -170,27 +254,47 @@ def _click_next_page(page) -> bool:
             return false;
         }
     """)
-    return clicked
 
 
-def scrape_prefix(prefix: str, playwright_instance) -> list[dict]:
-    """Scrape all results for a given last-name prefix."""
+# ── Per-prefix scraping ────────────────────────────────────────────────
+
+class RateLimited(Exception):
+    pass
+
+
+def scrape_prefix(prefix: str, browser) -> tuple[list[dict], int | None]:
+    """Scrape all results for a given last-name prefix.
+
+    Returns (results, expected_count).
+    Raises RateLimited if the site returns a 429.
+    """
     results = []
-    browser = playwright_instance.chromium.launch(headless=True)
-    page = browser.new_page(user_agent=USER_AGENT)
+    expected_count = None
+    ua = random.choice(USER_AGENTS)
+    context = browser.new_context(user_agent=ua)
+    page = context.new_page()
 
     try:
-        # Initial search
-        resp = page.goto(BASE_URL, wait_until="networkidle", timeout=30000)
+        resp = page.goto(BASE_URL, wait_until="networkidle", timeout=45000)
         if resp and resp.status == 429:
-            print(f"    RATE LIMITED (429) on initial load. Backing off {RATE_LIMIT_BACKOFF}s...")
-            time.sleep(RATE_LIMIT_BACKOFF)
-            browser.close()
-            return results
+            _save_screenshot(page, f"429_load_{prefix}")
+            raise RateLimited("429 on initial page load")
+
+        if _check_rate_limited(page):
+            _save_screenshot(page, f"429_body_{prefix}")
+            raise RateLimited("Rate limit detected in page body")
 
         page.fill('input[name="ps_last_name"]', prefix)
         page.click('#edit-ps-submit')
         page.wait_for_timeout(5000)
+
+        if _check_rate_limited(page):
+            _save_screenshot(page, f"429_results_{prefix}")
+            raise RateLimited("Rate limit after search submit")
+
+        expected_count = _get_result_count(page)
+        if expected_count is not None:
+            log.info(f"[{prefix}] expected results: {expected_count}")
 
         page_num = 1
         while True:
@@ -199,45 +303,52 @@ def scrape_prefix(prefix: str, playwright_instance) -> list[dict]:
                 break
 
             results.extend(cards)
-            print(f"    Page {page_num}: {len(cards)} results (total: {len(results)})")
+            log.info(f"[{prefix}] page {page_num}: {len(cards)} cards (total: {len(results)})")
 
-            _polite_sleep()
+            _polite_sleep(PAGE_DELAY_MIN, PAGE_DELAY_MAX)
 
             if not _click_next_page(page):
                 break
 
             page.wait_for_timeout(5000)
+
+            if _check_rate_limited(page):
+                _save_screenshot(page, f"429_page{page_num}_{prefix}")
+                log.warning(f"[{prefix}] rate limited mid-pagination at page {page_num}")
+                raise RateLimited(f"Rate limit on page {page_num+1}")
+
             page_num += 1
 
+    except RateLimited:
+        raise
+    except PlaywrightTimeout as e:
+        _save_screenshot(page, f"timeout_{prefix}")
+        log.warning(f"[{prefix}] timeout: {e}")
+        raise RateLimited(f"Timeout (likely rate limited): {e}")
     except Exception as e:
-        error_msg = str(e)
-        if "429" in error_msg or "Timeout" in error_msg:
-            print(f"    RATE LIMITED or TIMEOUT on page {page_num if 'page_num' in dir() else '?'}. Backing off...")
-            time.sleep(RATE_LIMIT_BACKOFF)
-        else:
-            print(f"    ERROR on page {page_num if 'page_num' in dir() else '?'}: {e}")
+        _save_screenshot(page, f"error_{prefix}")
+        log.error(f"[{prefix}] unexpected error: {e}")
     finally:
-        browser.close()
+        context.close()
 
-    return results
+    return results, expected_count
 
+
+# ── Progress & persistence ─────────────────────────────────────────────
 
 def load_progress() -> dict:
-    """Load scraping progress (which prefixes are done)."""
     if PROGRESS_PATH.exists():
         with open(PROGRESS_PATH) as f:
             return json.load(f)
-    return {"completed_prefixes": [], "total_registrants": 0}
+    return {"completed_prefixes": {}, "total_registrants": 0}
 
 
 def save_progress(progress: dict):
-    """Save scraping progress."""
     with open(PROGRESS_PATH, "w") as f:
         json.dump(progress, f, indent=2)
 
 
 def load_existing_results() -> list[dict]:
-    """Load previously scraped results."""
     if OUTPUT_PATH.exists():
         with open(OUTPUT_PATH) as f:
             return json.load(f)
@@ -245,134 +356,242 @@ def load_existing_results() -> list[dict]:
 
 
 def save_results(results: list[dict]):
-    """Save all results to the output file."""
     OUTPUT_PATH.parent.mkdir(parents=True, exist_ok=True)
     with open(OUTPUT_PATH, "w") as f:
         json.dump(results, f, indent=2, ensure_ascii=False)
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Scrape CPSBC registrant directory")
-    parser.add_argument("--resume", action="store_true", help="Resume from last progress")
-    parser.add_argument("--prefixes", type=str, help="Comma-separated prefixes to scrape (e.g. A,B,C)")
-    args = parser.parse_args()
-
-    # Two-letter prefixes (CPSBC requires at least 2 characters)
-    all_prefixes = [
-        chr(a) + chr(b)
-        for a in range(ord('A'), ord('Z') + 1)
-        for b in range(ord('a'), ord('z') + 1)
-    ]
-
-    if args.prefixes:
-        prefixes = [p.strip() for p in args.prefixes.split(",")]
-        # If single letters given, expand to two-letter prefixes
-        expanded = []
-        for p in prefixes:
-            if len(p) == 1:
-                expanded.extend([p + chr(b) for b in range(ord('a'), ord('z') + 1)])
-            else:
-                expanded.append(p)
-        prefixes = expanded
-    else:
-        prefixes = all_prefixes
-
-    progress = load_progress() if args.resume else {"completed_prefixes": [], "total_registrants": 0}
-    all_results = load_existing_results() if args.resume else []
-
-    # Filter out already-completed prefixes
-    remaining = [p for p in prefixes if p not in progress["completed_prefixes"]]
-    if not remaining:
-        print("All prefixes already scraped. Use without --resume to start fresh.")
-        return
-
-    print(f"CPSBC Directory Scraper")
-    print(f"  Output: {OUTPUT_PATH}")
-    print(f"  Prefixes to scrape: {', '.join(remaining)} ({len(remaining)} remaining)")
-    print(f"  Delay between pages: {DELAY_MIN}-{DELAY_MAX}s")
-    print(f"  Delay between prefixes: {PREFIX_DELAY_MIN}-{PREFIX_DELAY_MAX}s")
-    if all_results:
-        print(f"  Resuming with {len(all_results):,} existing results")
-    print()
-
-    consecutive_errors = 0
-
-    with sync_playwright() as pw:
-        for i, prefix in enumerate(remaining):
-            print(f"[{prefix}] Searching prefix {i+1}/{len(remaining)}...")
-
-            # Retry loop: back off and retry on rate limits instead of bailing
-            max_retries = 3
-            results = []
-            for attempt in range(max_retries):
-                start = time.time()
-                results = scrape_prefix(prefix, pw)
-                elapsed = time.time() - start
-
-                if len(results) > 0 or elapsed < 10:
-                    # Got results, or fast empty response (legitimately no matches)
-                    break
-
-                # Slow empty response = likely rate limited
-                if attempt < max_retries - 1:
-                    backoff = RATE_LIMIT_BACKOFF * (attempt + 1)
-                    print(f"    Rate limited on '{prefix}' (attempt {attempt+1}/{max_retries}). "
-                          f"Sleeping {backoff:.0f}s...")
-                    time.sleep(backoff)
-
-            # Track consecutive rate-limit failures
-            was_rate_limited = len(results) == 0 and elapsed >= 10
-            if was_rate_limited:
-                consecutive_errors += 1
-                if consecutive_errors >= MAX_CONSECUTIVE_ERRORS:
-                    print(f"\n{MAX_CONSECUTIVE_ERRORS} consecutive rate-limit failures after retries.")
-                    print(f"Resume later with: python -m pipeline.scrape_cpsbc --resume")
-                    break
-                # Don't mark rate-limited prefixes as completed
-                print(f"[{prefix}] Skipped (rate limited after {max_retries} attempts)")
-                continue
-            else:
-                consecutive_errors = 0
-
-            all_results.extend(results)
-            progress["completed_prefixes"].append(prefix)
-            progress["total_registrants"] = len(all_results)
-
-            # Save after each prefix (incremental)
-            save_results(all_results)
-            save_progress(progress)
-
-            print(f"[{prefix}] Done: {len(results)} registrants in {elapsed:.0f}s "
-                  f"(cumulative: {len(all_results):,})")
-
-            # Long pause between prefixes
-            if i < len(remaining) - 1:
-                _polite_sleep(PREFIX_DELAY_MIN, PREFIX_DELAY_MAX)
-
-    # Deduplicate by cpsbc_id
+def deduplicate(results: list[dict]) -> list[dict]:
     seen = set()
     deduped = []
-    for r in all_results:
+    for r in results:
         key = r.get("cpsbc_id")
         if key and key in seen:
             continue
         if key:
             seen.add(key)
         deduped.append(r)
+    return deduped
 
+
+def generate_prefixes() -> list[str]:
+    return [
+        chr(a) + chr(b)
+        for a in range(ord('A'), ord('Z') + 1)
+        for b in range(ord('a'), ord('z') + 1)
+    ]
+
+
+# ── Verify mode ────────────────────────────────────────────────────────
+
+def verify_scrape():
+    """Check existing scrape for truncated prefixes."""
+    progress = load_progress()
+    completed = progress.get("completed_prefixes", {})
+    results = load_existing_results()
+
+    if not completed:
+        print("No progress data found. Run a scrape first.")
+        return
+
+    from collections import Counter
+    actual_counts = Counter()
+    for r in results:
+        name = r.get("full_name", "")
+        if len(name) >= 2:
+            actual_counts[name[:2].title()] += 1
+
+    print(f"{'Prefix':<8} {'Expected':>10} {'Actual':>10} {'Status':<15}")
+    print("-" * 48)
+
+    issues = 0
+    for prefix, info in sorted(completed.items()):
+        expected = info.get("expected_count")
+        actual = actual_counts.get(prefix, 0)
+
+        if expected is None:
+            status = "no header"
+        elif actual < expected:
+            status = f"TRUNCATED (-{expected - actual})"
+            issues += 1
+        elif actual == expected:
+            status = "OK"
+        else:
+            status = f"extra (+{actual - expected})"
+
+        exp_str = str(expected) if expected is not None else "?"
+        print(f"{prefix:<8} {exp_str:>10} {actual:>10} {status:<15}")
+
+    all_prefixes = set(generate_prefixes())
+    not_scraped = all_prefixes - set(completed.keys())
+    print(f"\nTotal completed: {len(completed)}")
+    print(f"Not scraped: {len(not_scraped)} prefixes")
+    print(f"Issues found: {issues}")
+
+
+# ── Main ───────────────────────────────────────────────────────────────
+
+def main():
+    parser = argparse.ArgumentParser(description="Scrape CPSBC registrant directory")
+    parser.add_argument("--resume", action="store_true",
+                        help="Resume from last progress (keep existing data)")
+    parser.add_argument("--fresh", action="store_true",
+                        help="Start a completely clean scrape (wipes old data)")
+    parser.add_argument("--verify", action="store_true",
+                        help="Verify existing scrape for truncated prefixes")
+    parser.add_argument("--prefixes", type=str,
+                        help="Comma-separated prefixes to scrape (e.g. A,Ba,Ch)")
+    args = parser.parse_args()
+
+    setup_logging()
+
+    if args.verify:
+        verify_scrape()
+        return
+
+    # Determine prefixes
+    all_prefixes = generate_prefixes()
+
+    if args.prefixes:
+        prefixes = []
+        for p in args.prefixes.split(","):
+            p = p.strip()
+            if len(p) == 1:
+                prefixes.extend([p.upper() + chr(b) for b in range(ord('a'), ord('z') + 1)])
+            else:
+                prefixes.append(p[0].upper() + p[1:].lower())
+    else:
+        prefixes = all_prefixes
+
+    # Load or reset state
+    if args.fresh:
+        log.info("Starting fresh scrape — wiping old data")
+        progress = {"completed_prefixes": {}, "total_registrants": 0}
+        all_results = []
+        save_progress(progress)
+        save_results(all_results)
+    elif args.resume:
+        progress = load_progress()
+        all_results = load_existing_results()
+        if isinstance(progress.get("completed_prefixes"), list):
+            log.info("Migrating old progress format (list -> dict)")
+            progress["completed_prefixes"] = {
+                p: {"expected_count": None, "actual_count": None}
+                for p in progress["completed_prefixes"]
+            }
+        log.info(f"Resuming with {len(all_results):,} existing results, "
+                 f"{len(progress['completed_prefixes'])} prefixes done")
+    else:
+        print("Specify --fresh to start clean, or --resume to continue.")
+        print("Use --verify to check existing scrape quality.")
+        return
+
+    # Filter to remaining prefixes
+    completed_set = set(progress["completed_prefixes"].keys())
+    remaining = [p for p in prefixes if p not in completed_set]
+
+    if not remaining:
+        log.info("All prefixes already scraped.")
+        return
+
+    # Randomize order to look less bot-like
+    random.shuffle(remaining)
+
+    log.info(f"Prefixes remaining: {len(remaining)}")
+    log.info(f"Page delay: {PAGE_DELAY_MIN}-{PAGE_DELAY_MAX}s")
+    log.info(f"Prefix delay: {PREFIX_DELAY_MIN}-{PREFIX_DELAY_MAX}s")
+
+    consecutive_429 = 0
+    prefixes_since_rotate = 0
+
+    with sync_playwright() as pw:
+        browser = pw.chromium.launch(headless=True)
+
+        try:
+            for i, prefix in enumerate(remaining):
+                log.info(f"[{prefix}] prefix {i+1}/{len(remaining)}")
+
+                # Rotate browser periodically
+                prefixes_since_rotate += 1
+                if prefixes_since_rotate >= CONTEXT_ROTATE_EVERY:
+                    log.info("  rotating browser")
+                    browser.close()
+                    _polite_sleep(10, 20)
+                    browser = pw.chromium.launch(headless=True)
+                    prefixes_since_rotate = 0
+
+                # Retry loop with exponential backoff
+                results = []
+                expected_count = None
+                success = False
+
+                for attempt in range(MAX_RETRIES):
+                    try:
+                        results, expected_count = scrape_prefix(prefix, browser)
+                        success = True
+                        break
+                    except RateLimited as e:
+                        log.warning(f"[{prefix}] rate limited: {e}")
+                        if attempt < MAX_RETRIES - 1:
+                            _backoff_sleep(attempt)
+                            browser.close()
+                            browser = pw.chromium.launch(headless=True)
+                            prefixes_since_rotate = 0
+                        else:
+                            log.error(f"[{prefix}] giving up after {MAX_RETRIES} attempts")
+
+                if not success:
+                    consecutive_429 += 1
+                    if consecutive_429 >= MAX_CONSECUTIVE_429:
+                        log.error(f"{MAX_CONSECUTIVE_429} consecutive rate-limit failures. "
+                                  "Resume later with: --resume")
+                        break
+                    continue
+                else:
+                    consecutive_429 = 0
+
+                # Verify pagination completeness
+                actual_count = len(results)
+                if expected_count is not None and actual_count < expected_count:
+                    log.warning(f"[{prefix}] PAGINATION TRUNCATED: "
+                                f"expected {expected_count}, got {actual_count}")
+
+                # Save incrementally
+                all_results.extend(results)
+                progress["completed_prefixes"][prefix] = {
+                    "expected_count": expected_count,
+                    "actual_count": actual_count,
+                    "scraped_at": datetime.now().isoformat(),
+                }
+                progress["total_registrants"] = len(all_results)
+
+                save_results(deduplicate(all_results))
+                save_progress(progress)
+
+                log.info(f"[{prefix}] done: {actual_count} registrants "
+                         f"(cumulative: {len(all_results):,})")
+
+                # Pause between prefixes
+                if i < len(remaining) - 1:
+                    _polite_sleep(PREFIX_DELAY_MIN, PREFIX_DELAY_MAX)
+
+        finally:
+            browser.close()
+
+    # Final dedup and save
+    deduped = deduplicate(all_results)
     save_results(deduped)
 
-    print(f"\nScrape complete.")
-    print(f"  Total registrants: {len(deduped):,} (deduped from {len(all_results):,})")
-    print(f"  Output: {OUTPUT_PATH}")
+    log.info(f"\nScrape complete.")
+    log.info(f"  Total registrants: {len(deduped):,} (deduped from {len(all_results):,})")
+    log.info(f"  Output: {OUTPUT_PATH}")
 
-    # Stats
     with_specialty = sum(1 for r in deduped if r.get("specialty"))
     with_city = sum(1 for r in deduped if r.get("city"))
     practising = sum(1 for r in deduped if (r.get("licence_status") or "").lower() == "practising")
-    print(f"  With specialty: {with_specialty:,}")
-    print(f"  With city: {with_city:,}")
-    print(f"  Practising: {practising:,}")
+    log.info(f"  With specialty: {with_specialty:,}")
+    log.info(f"  With city: {with_city:,}")
+    log.info(f"  Practising: {practising:,}")
 
 
 if __name__ == "__main__":

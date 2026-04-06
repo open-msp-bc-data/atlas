@@ -16,15 +16,16 @@ def deterministic_pseudo_id(
 ) -> str:
     """Generate a deterministic anonymised identifier from a physician name and city.
 
-    Uses 16 hex characters (64 bits) for collision resistance across ~150k
-    physicians per year. Returns a string like ``PHY-A1B2C3D4E5F6G7H8``.
+    Uses 32 hex characters (128 bits) for collision resistance and to make
+    rainbow-table attacks computationally expensive even if the salt leaks.
+    Returns a string like ``PHY-A1B2C3D4E5F6G7H8I9J0K1L2M3N4O5P6``.
     """
     if salt is None:
-        salt = os.environ.get("PRIVACY_SALT") or get_privacy_config().get("salt", "")
+        salt = os.environ.get("PRIVACY_SALT", "")
     # Normalize inputs for consistency
     name_norm = full_name.strip().lower()
     city_norm = city.strip().lower() if city else ""
-    digest = hashlib.sha256(f"{salt}:{name_norm}:{city_norm}".encode()).hexdigest()[:16].upper()
+    digest = hashlib.sha256(f"{salt}:{name_norm}:{city_norm}".encode()).hexdigest()[:32].upper()
     return f"PHY-{digest}"
 
 

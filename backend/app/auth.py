@@ -16,8 +16,7 @@ def validate_admin_token(token: str | None) -> bool:
     """
     if not token:
         return False
-    expected = os.environ.get("ADMIN_TOKEN") or get_api_config().get("admin_token", "")
-    expected = expected.strip()
+    expected = os.environ.get("ADMIN_TOKEN", "").strip()
     if not expected or len(expected) < 16:
         return False
     return hmac.compare_digest(token.strip(), expected)

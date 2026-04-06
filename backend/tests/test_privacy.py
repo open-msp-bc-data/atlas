@@ -18,7 +18,7 @@ class TestDeterministicPseudoId:
     def test_format(self):
         pid = deterministic_pseudo_id("Dr. John Smith", salt="test")
         assert pid.startswith("PHY-")
-        assert len(pid) == 20  # PHY- + 16 hex chars
+        assert len(pid) == 36  # PHY- + 32 hex chars
 
     def test_deterministic(self):
         a = deterministic_pseudo_id("Dr. John Smith", salt="test")
