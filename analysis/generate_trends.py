@@ -224,18 +224,22 @@ def main():
     for i, year in enumerate(all_years):
         current = norm_by_year[year]
         if i == 0:
-            new, exited, retained, retention_pct = len(current), 0, 0, None
+            new, exited, retained, returnees, retention_pct = len(current), 0, 0, 0, None
         else:
             prev = norm_by_year[all_years[i - 1]]
-            new = len(current - cumulative_ever)
-            exited = len(prev - current)
             retained = len(current & prev)
+            exited = len(prev - current)
+            new_to_system = current - cumulative_ever
+            returned = (current - prev) & cumulative_ever  # were seen before but not last year
+            new = len(new_to_system)
+            returnees = len(returned)
             retention_pct = round(retained / len(prev) * 100, 1)
         cumulative_ever |= current
         turnover.append({
             "year": year,
             "total": len(current),
             "new_entrants": new,
+            "returnees": returnees,
             "exits": exited,
             "retained": retained,
             "retention_pct": retention_pct,

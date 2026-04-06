@@ -300,6 +300,7 @@ function TurnoverPanel({ data }) {
             <Tooltip />
             <Legend />
             <Bar dataKey="new_entrants" fill={SUCCESS} name="New Entrants" radius={0} />
+            <Bar dataKey="returnees" fill={INFO} name="Returnees" radius={0} />
             <Bar dataKey="exits" fill={ACCENT} name="Exits" radius={0} />
           </BarChart>
         </ResponsiveContainer>
