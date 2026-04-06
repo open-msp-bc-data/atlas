@@ -1,0 +1,385 @@
+{
+  "generated": "2026-04-06",
+  "source": "BC MSP Blue Book PDFs (2011-2024)",
+  "n_fiscal_years": 11,
+  "years": [
+    "2011-2012",
+    "2013-2014",
+    "2014-2015",
+    "2016-2017",
+    "2017-2018",
+    "2018-2019",
+    "2019-2020",
+    "2020-2021",
+    "2021-2022",
+    "2022-2023",
+    "2023-2024"
+  ],
+  "billing_trends": [
+    {
+      "year": "2011-2012",
+      "n_practitioners": 9522,
+      "total_billing": 2431199585,
+      "mean_billing": 255324,
+      "median_billing": 213122,
+      "max_billing": 2856997
+    },
+    {
+      "year": "2013-2014",
+      "n_practitioners": 10224,
+      "total_billing": 2625401742,
+      "mean_billing": 256788,
+      "median_billing": 212444,
+      "max_billing": 3357690
+    },
+    {
+      "year": "2014-2015",
+      "n_practitioners": 10453,
+      "total_billing": 2705051510,
+      "mean_billing": 258782,
+      "median_billing": 210795,
+      "max_billing": 3363980
+    },
+    {
+      "year": "2016-2017",
+      "n_practitioners": 11127,
+      "total_billing": 2938650787,
+      "mean_billing": 264101,
+      "median_billing": 211077,
+      "max_billing": 3617898
+    },
+    {
+      "year": "2017-2018",
+      "n_practitioners": 11330,
+      "total_billing": 2950285124,
+      "mean_billing": 260396,
+      "median_billing": 204186,
+      "max_billing": 3360966
+    },
+    {
+      "year": "2018-2019",
+      "n_practitioners": 11780,
+      "total_billing": 3124394939,
+      "mean_billing": 265229,
+      "median_billing": 206354,
+      "max_billing": 3352189
+    },
+    {
+      "year": "2019-2020",
+      "n_practitioners": 12026,
+      "total_billing": 3285997671,
+      "mean_billing": 273241,
+      "median_billing": 215081,
+      "max_billing": 3595713
+    },
+    {
+      "year": "2020-2021",
+      "n_practitioners": 12007,
+      "total_billing": 3242742085,
+      "mean_billing": 270071,
+      "median_billing": 213719,
+      "max_billing": 3335932
+    },
+    {
+      "year": "2021-2022",
+      "n_practitioners": 12500,
+      "total_billing": 3554281167,
+      "mean_billing": 284342,
+      "median_billing": 221567,
+      "max_billing": 3977391
+    },
+    {
+      "year": "2022-2023",
+      "n_practitioners": 12020,
+      "total_billing": 3390782939,
+      "mean_billing": 282095,
+      "median_billing": 222946,
+      "max_billing": 4403272
+    },
+    {
+      "year": "2023-2024",
+      "n_practitioners": 12493,
+      "total_billing": 4147996254,
+      "mean_billing": 332026,
+      "median_billing": 272539,
+      "max_billing": 5029461
+    }
+  ],
+  "inequality": [
+    {
+      "year": "2011-2012",
+      "gini": 0.415,
+      "p10": 48759,
+      "p25": 100003,
+      "p50": 213162,
+      "p75": 345848,
+      "p90": 502678,
+      "p99": 994622
+    },
+    {
+      "year": "2013-2014",
+      "gini": 0.4196,
+      "p10": 49697,
+      "p25": 97434,
+      "p50": 212452,
+      "p75": 351255,
+      "p90": 505355,
+      "p99": 985531
+    },
+    {
+      "year": "2014-2015",
+      "gini": 0.4214,
+      "p10": 49945,
+      "p25": 99792,
+      "p50": 210795,
+      "p75": 355334,
+      "p90": 512377,
+      "p99": 1010364
+    },
+    {
+      "year": "2016-2017",
+      "gini": 0.4312,
+      "p10": 49186,
+      "p25": 98774,
+      "p50": 211077,
+      "p75": 359484,
+      "p90": 523380,
+      "p99": 1102255
+    },
+    {
+      "year": "2017-2018",
+      "gini": 0.432,
+      "p10": 49963,
+      "p25": 97714,
+      "p50": 204197,
+      "p75": 351407,
+      "p90": 516358,
+      "p99": 1097341
+    },
+    {
+      "year": "2018-2019",
+      "gini": 0.437,
+      "p10": 51451,
+      "p25": 97770,
+      "p50": 206395,
+      "p75": 357454,
+      "p90": 529953,
+      "p99": 1162964
+    },
+    {
+      "year": "2019-2020",
+      "gini": 0.4371,
+      "p10": 51532,
+      "p25": 100134,
+      "p50": 215103,
+      "p75": 367919,
+      "p90": 549910,
+      "p99": 1164722
+    },
+    {
+      "year": "2020-2021",
+      "gini": 0.435,
+      "p10": 49849,
+      "p25": 98132,
+      "p50": 213719,
+      "p75": 365876,
+      "p90": 550590,
+      "p99": 1109516
+    },
+    {
+      "year": "2021-2022",
+      "gini": 0.4467,
+      "p10": 49951,
+      "p25": 99977,
+      "p50": 221618,
+      "p75": 383779,
+      "p90": 578430,
+      "p99": 1230243
+    },
+    {
+      "year": "2022-2023",
+      "gini": 0.4399,
+      "p10": 53105,
+      "p25": 99303,
+      "p50": 222962,
+      "p75": 382048,
+      "p90": 562273,
+      "p99": 1193913
+    },
+    {
+      "year": "2023-2024",
+      "gini": 0.4345,
+      "p10": 57323,
+      "p25": 114108,
+      "p50": 272539,
+      "p75": 466221,
+      "p90": 659619,
+      "p99": 1313394
+    }
+  ],
+  "turnover": [
+    {
+      "year": "2011-2012",
+      "total": 9522,
+      "new_entrants": 9522,
+      "exits": 0,
+      "retained": 0,
+      "retention_pct": null
+    },
+    {
+      "year": "2013-2014",
+      "total": 10224,
+      "new_entrants": 1550,
+      "exits": 848,
+      "retained": 8674,
+      "retention_pct": 91.1
+    },
+    {
+      "year": "2014-2015",
+      "total": 10453,
+      "new_entrants": 1756,
+      "exits": 1604,
+      "retained": 8620,
+      "retention_pct": 84.3
+    },
+    {
+      "year": "2016-2017",
+      "total": 11127,
+      "new_entrants": 1622,
+      "exits": 1130,
+      "retained": 9323,
+      "retention_pct": 89.2
+    },
+    {
+      "year": "2017-2018",
+      "total": 11330,
+      "new_entrants": 934,
+      "exits": 862,
+      "retained": 10265,
+      "retention_pct": 92.3
+    },
+    {
+      "year": "2018-2019",
+      "total": 11780,
+      "new_entrants": 904,
+      "exits": 739,
+      "retained": 10591,
+      "retention_pct": 93.5
+    },
+    {
+      "year": "2019-2020",
+      "total": 12026,
+      "new_entrants": 798,
+      "exits": 754,
+      "retained": 11026,
+      "retention_pct": 93.6
+    },
+    {
+      "year": "2020-2021",
+      "total": 12007,
+      "new_entrants": 844,
+      "exits": 1036,
+      "retained": 10990,
+      "retention_pct": 91.4
+    },
+    {
+      "year": "2021-2022",
+      "total": 12500,
+      "new_entrants": 991,
+      "exits": 792,
+      "retained": 11215,
+      "retention_pct": 93.4
+    },
+    {
+      "year": "2022-2023",
+      "total": 12020,
+      "new_entrants": 825,
+      "exits": 1515,
+      "retained": 10985,
+      "retention_pct": 87.9
+    },
+    {
+      "year": "2023-2024",
+      "total": 12493,
+      "new_entrants": 841,
+      "exits": 773,
+      "retained": 11247,
+      "retention_pct": 93.6
+    }
+  ],
+  "income_brackets": {
+    "year": "2023-2024",
+    "brackets": [
+      {
+        "label": "Under $100K",
+        "count": 2690,
+        "pct_of_physicians": 21.5,
+        "total_billing": 163250308,
+        "pct_of_billing": 3.9
+      },
+      {
+        "label": "$100K-$200K",
+        "count": 2314,
+        "pct_of_physicians": 18.5,
+        "total_billing": 335105143,
+        "pct_of_billing": 8.1
+      },
+      {
+        "label": "$200K-$300K",
+        "count": 1702,
+        "pct_of_physicians": 13.6,
+        "total_billing": 425890805,
+        "pct_of_billing": 10.3
+      },
+      {
+        "label": "$300K-$500K",
+        "count": 3092,
+        "pct_of_physicians": 24.7,
+        "total_billing": 1220739486,
+        "pct_of_billing": 29.4
+      },
+      {
+        "label": "$500K-$1M",
+        "count": 2399,
+        "pct_of_physicians": 19.2,
+        "total_billing": 1565971821,
+        "pct_of_billing": 37.8
+      },
+      {
+        "label": "$1M+",
+        "count": 296,
+        "pct_of_physicians": 2.4,
+        "total_billing": 437038691,
+        "pct_of_billing": 10.5
+      }
+    ]
+  },
+  "pareto": [
+    {
+      "top_pct": 1,
+      "n_practitioners": 205,
+      "billing_share": 8.0
+    },
+    {
+      "top_pct": 5,
+      "n_practitioners": 1029,
+      "billing_share": 24.3
+    },
+    {
+      "top_pct": 10,
+      "n_practitioners": 2058,
+      "billing_share": 38.5
+    },
+    {
+      "top_pct": 20,
+      "n_practitioners": 4117,
+      "billing_share": 59.0
+    },
+    {
+      "top_pct": 50,
+      "n_practitioners": 10293,
+      "billing_share": 89.4
+    }
+  ],
+  "total_unique_practitioners": 20587
+}
