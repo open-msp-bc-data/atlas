@@ -45,6 +45,13 @@ data/raw/
 data/processed/
 *.parquet
 
+# Analysis outputs (generated, large)
+analysis/parsed/
+analysis/bluebook_raw_data.csv
+
+# Scraper error screenshots
+data/scrape_errors/
+
 # Logs
 *.log
 .gstack/
