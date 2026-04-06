@@ -17,347 +17,405 @@
     "2022-2023",
     "2023-2024"
   ],
+  "total_unique_practitioners": 20342,
+  "cagr_nominal_pct": 4.6,
+  "cagr_real_pct": 2.2,
+  "cpi_base_year": "2023-2024",
   "billing_trends": [
     {
       "year": "2011-2012",
-      "n_practitioners": 9522,
+      "n_practitioners": 9526,
       "total_billing": 2431199585,
-      "mean_billing": 255324,
+      "total_billing_real": 3184670531,
+      "mean_billing": 255217,
+      "mean_billing_real": 334314,
       "median_billing": 213122,
+      "median_billing_real": 279172,
       "max_billing": 2856997
     },
     {
       "year": "2012-2013",
-      "n_practitioners": 9767,
+      "n_practitioners": 9771,
       "total_billing": 2477685277,
-      "mean_billing": 253679,
-      "median_billing": 210415,
+      "total_billing_real": 3213691624,
+      "mean_billing": 253575,
+      "mean_billing_real": 328901,
+      "median_billing": 210241,
+      "median_billing_real": 272695,
       "max_billing": 2985821
     },
     {
       "year": "2013-2014",
-      "n_practitioners": 10224,
+      "n_practitioners": 10230,
       "total_billing": 2625401742,
-      "mean_billing": 256788,
-      "median_billing": 212444,
+      "total_billing_real": 3369442722,
+      "mean_billing": 256638,
+      "mean_billing_real": 329369,
+      "median_billing": 212322,
+      "median_billing_real": 272494,
       "max_billing": 3357690
     },
     {
       "year": "2014-2015",
-      "n_practitioners": 10453,
+      "n_practitioners": 10458,
       "total_billing": 2705051510,
-      "mean_billing": 258782,
-      "median_billing": 210795,
+      "total_billing_real": 3443780436,
+      "mean_billing": 258659,
+      "mean_billing_real": 329296,
+      "median_billing": 210559,
+      "median_billing_real": 268061,
       "max_billing": 3363980
     },
     {
       "year": "2015-2016",
-      "n_practitioners": 10679,
+      "n_practitioners": 10683,
       "total_billing": 2770377361,
-      "mean_billing": 259423,
-      "median_billing": 212139,
+      "total_billing_real": 3490499299,
+      "mean_billing": 259326,
+      "mean_billing_real": 326734,
+      "median_billing": 212106,
+      "median_billing_real": 267240,
       "max_billing": 3306401
     },
     {
       "year": "2016-2017",
-      "n_practitioners": 11127,
+      "n_practitioners": 11128,
       "total_billing": 2938650787,
-      "mean_billing": 264101,
-      "median_billing": 211077,
+      "total_billing_real": 3638876170,
+      "mean_billing": 264077,
+      "mean_billing_real": 327002,
+      "median_billing": 211131,
+      "median_billing_real": 261439,
       "max_billing": 3617898
     },
     {
       "year": "2017-2018",
-      "n_practitioners": 11330,
+      "n_practitioners": 11333,
       "total_billing": 2950285124,
-      "mean_billing": 260396,
-      "median_billing": 204186,
+      "total_billing_real": 3569619788,
+      "mean_billing": 260327,
+      "mean_billing_real": 314976,
+      "median_billing": 204176,
+      "median_billing_real": 247037,
       "max_billing": 3360966
     },
     {
       "year": "2018-2019",
-      "n_practitioners": 11780,
+      "n_practitioners": 11784,
       "total_billing": 3124394939,
-      "mean_billing": 265229,
-      "median_billing": 206354,
+      "total_billing_real": 3695646253,
+      "mean_billing": 265139,
+      "mean_billing_real": 313616,
+      "median_billing": 206310,
+      "median_billing_real": 244031,
       "max_billing": 3352189
     },
     {
       "year": "2019-2020",
-      "n_practitioners": 12026,
+      "n_practitioners": 12030,
       "total_billing": 3285997671,
-      "mean_billing": 273241,
-      "median_billing": 215081,
+      "total_billing_real": 3843768493,
+      "mean_billing": 273150,
+      "mean_billing_real": 319515,
+      "median_billing": 215020,
+      "median_billing_real": 251518,
       "max_billing": 3595713
     },
     {
       "year": "2020-2021",
-      "n_practitioners": 12007,
+      "n_practitioners": 12010,
       "total_billing": 3242742085,
-      "mean_billing": 270071,
-      "median_billing": 213719,
+      "total_billing_real": 3697659140,
+      "mean_billing": 270004,
+      "mean_billing_real": 307882,
+      "median_billing": 213664,
+      "median_billing_real": 243639,
       "max_billing": 3335932
     },
     {
       "year": "2021-2022",
-      "n_practitioners": 12500,
+      "n_practitioners": 12506,
       "total_billing": 3554281167,
-      "mean_billing": 284342,
-      "median_billing": 221567,
+      "total_billing_real": 3832337177,
+      "mean_billing": 284206,
+      "mean_billing_real": 306440,
+      "median_billing": 221478,
+      "median_billing_real": 238805,
       "max_billing": 3977391
     },
     {
       "year": "2022-2023",
-      "n_practitioners": 12020,
+      "n_practitioners": 12023,
       "total_billing": 3390782939,
-      "mean_billing": 282095,
-      "median_billing": 222946,
+      "total_billing_real": 3489864259,
+      "mean_billing": 282025,
+      "mean_billing_real": 290266,
+      "median_billing": 222930,
+      "median_billing_real": 229444,
       "max_billing": 4403272
     },
     {
       "year": "2023-2024",
-      "n_practitioners": 12493,
+      "n_practitioners": 12496,
       "total_billing": 4147996254,
-      "mean_billing": 332026,
-      "median_billing": 272539,
+      "total_billing_real": 4147996254,
+      "mean_billing": 331946,
+      "mean_billing_real": 331946,
+      "median_billing": 272520,
+      "median_billing_real": 272520,
       "max_billing": 5029461
     }
   ],
   "inequality": [
     {
       "year": "2011-2012",
-      "gini": 0.415,
-      "p10": 48759,
-      "p25": 100003,
-      "p50": 213162,
-      "p75": 345848,
-      "p90": 502678,
-      "p99": 994622
+      "gini": 0.4147,
+      "p10": 48805,
+      "p25": 100012,
+      "p50": 213122,
+      "p75": 345838,
+      "p90": 502754,
+      "p99": 991462
     },
     {
       "year": "2012-2013",
       "gini": 0.4126,
       "p10": 50304,
-      "p25": 101990,
-      "p50": 210415,
-      "p75": 343863,
-      "p90": 496931,
-      "p99": 1004589
+      "p25": 101958,
+      "p50": 210241,
+      "p75": 343820,
+      "p90": 496704,
+      "p99": 1003700
     },
     {
       "year": "2013-2014",
       "gini": 0.4196,
-      "p10": 49697,
-      "p25": 97434,
-      "p50": 212452,
-      "p75": 351255,
-      "p90": 505355,
-      "p99": 985531
+      "p10": 49672,
+      "p25": 97380,
+      "p50": 212322,
+      "p75": 351100,
+      "p90": 504913,
+      "p99": 985216
     },
     {
       "year": "2014-2015",
       "gini": 0.4214,
-      "p10": 49945,
-      "p25": 99792,
-      "p50": 210795,
-      "p75": 355334,
-      "p90": 512377,
-      "p99": 1010364
+      "p10": 49857,
+      "p25": 99731,
+      "p50": 210559,
+      "p75": 355320,
+      "p90": 512056,
+      "p99": 1009576
     },
     {
       "year": "2015-2016",
       "gini": 0.4226,
-      "p10": 50542,
-      "p25": 100808,
-      "p50": 212139,
-      "p75": 353668,
-      "p90": 509671,
-      "p99": 1045425
+      "p10": 50535,
+      "p25": 100786,
+      "p50": 212106,
+      "p75": 353626,
+      "p90": 509423,
+      "p99": 1042818
     },
     {
       "year": "2016-2017",
       "gini": 0.4312,
-      "p10": 49186,
-      "p25": 98774,
-      "p50": 211077,
-      "p75": 359484,
-      "p90": 523380,
-      "p99": 1102255
+      "p10": 49195,
+      "p25": 98808,
+      "p50": 211131,
+      "p75": 359335,
+      "p90": 523328,
+      "p99": 1102209
     },
     {
       "year": "2017-2018",
       "gini": 0.432,
-      "p10": 49963,
-      "p25": 97714,
-      "p50": 204197,
-      "p75": 351407,
-      "p90": 516358,
-      "p99": 1097341
+      "p10": 49913,
+      "p25": 97709,
+      "p50": 204176,
+      "p75": 351398,
+      "p90": 516010,
+      "p99": 1095354
     },
     {
       "year": "2018-2019",
       "gini": 0.437,
-      "p10": 51451,
-      "p25": 97770,
-      "p50": 206395,
-      "p75": 357454,
-      "p90": 529953,
-      "p99": 1162964
+      "p10": 51349,
+      "p25": 97743,
+      "p50": 206310,
+      "p75": 357249,
+      "p90": 529926,
+      "p99": 1151066
     },
     {
       "year": "2019-2020",
       "gini": 0.4371,
-      "p10": 51532,
-      "p25": 100134,
-      "p50": 215103,
-      "p75": 367919,
-      "p90": 549910,
-      "p99": 1164722
+      "p10": 51493,
+      "p25": 99993,
+      "p50": 215020,
+      "p75": 367877,
+      "p90": 549540,
+      "p99": 1164026
     },
     {
       "year": "2020-2021",
       "gini": 0.435,
-      "p10": 49849,
-      "p25": 98132,
-      "p50": 213719,
-      "p75": 365876,
-      "p90": 550590,
-      "p99": 1109516
+      "p10": 49772,
+      "p25": 98122,
+      "p50": 213664,
+      "p75": 365828,
+      "p90": 550310,
+      "p99": 1108952
     },
     {
       "year": "2021-2022",
       "gini": 0.4467,
-      "p10": 49951,
-      "p25": 99977,
-      "p50": 221618,
-      "p75": 383779,
-      "p90": 578430,
-      "p99": 1230243
+      "p10": 49938,
+      "p25": 99942,
+      "p50": 221478,
+      "p75": 383565,
+      "p90": 578171,
+      "p99": 1223492
     },
     {
       "year": "2022-2023",
       "gini": 0.4399,
-      "p10": 53105,
-      "p25": 99303,
-      "p50": 222962,
-      "p75": 382048,
-      "p90": 562273,
-      "p99": 1193913
+      "p10": 53111,
+      "p25": 99281,
+      "p50": 222930,
+      "p75": 381679,
+      "p90": 562021,
+      "p99": 1193771
     },
     {
       "year": "2023-2024",
       "gini": 0.4345,
-      "p10": 57323,
-      "p25": 114108,
-      "p50": 272539,
-      "p75": 466221,
-      "p90": 659619,
-      "p99": 1313394
+      "p10": 57329,
+      "p25": 114072,
+      "p50": 272520,
+      "p75": 466138,
+      "p90": 659495,
+      "p99": 1299271
     }
   ],
+  "gini_bootstrap_test": {
+    "first_year": "2011-2012",
+    "last_year": "2023-2024",
+    "gini_first": 0.4147,
+    "gini_last": 0.4345,
+    "ci_95_first": [
+      0.4089,
+      0.4206
+    ],
+    "ci_95_last": [
+      0.4287,
+      0.4401
+    ],
+    "significant": true
+  },
   "turnover": [
     {
       "year": "2011-2012",
-      "total": 9522,
-      "new_entrants": 9522,
+      "total": 9526,
+      "new_entrants": 9526,
       "exits": 0,
       "retained": 0,
       "retention_pct": null
     },
     {
       "year": "2012-2013",
-      "total": 9767,
-      "new_entrants": 829,
-      "exits": 584,
-      "retained": 8938,
-      "retention_pct": 93.9
+      "total": 9771,
+      "new_entrants": 832,
+      "exits": 587,
+      "retained": 8939,
+      "retention_pct": 93.8
     },
     {
       "year": "2013-2014",
-      "total": 10224,
-      "new_entrants": 855,
-      "exits": 517,
-      "retained": 9250,
+      "total": 10230,
+      "new_entrants": 858,
+      "exits": 518,
+      "retained": 9253,
       "retention_pct": 94.7
     },
     {
       "year": "2014-2015",
-      "total": 10453,
-      "new_entrants": 1733,
-      "exits": 1604,
-      "retained": 8620,
-      "retention_pct": 84.3
+      "total": 10458,
+      "new_entrants": 1390,
+      "exits": 1266,
+      "retained": 8964,
+      "retention_pct": 87.6
     },
     {
       "year": "2015-2016",
-      "total": 10679,
-      "new_entrants": 823,
-      "exits": 738,
-      "retained": 9715,
-      "retention_pct": 92.9
+      "total": 10683,
+      "new_entrants": 791,
+      "exits": 704,
+      "retained": 9754,
+      "retention_pct": 93.3
     },
     {
       "year": "2016-2017",
-      "total": 11127,
-      "new_entrants": 894,
-      "exits": 699,
-      "retained": 9980,
-      "retention_pct": 93.5
+      "total": 11128,
+      "new_entrants": 876,
+      "exits": 682,
+      "retained": 10001,
+      "retention_pct": 93.6
     },
     {
       "year": "2017-2018",
-      "total": 11330,
-      "new_entrants": 909,
-      "exits": 862,
-      "retained": 10265,
-      "retention_pct": 92.3
+      "total": 11333,
+      "new_entrants": 893,
+      "exits": 851,
+      "retained": 10277,
+      "retention_pct": 92.4
     },
     {
       "year": "2018-2019",
-      "total": 11780,
-      "new_entrants": 897,
-      "exits": 739,
-      "retained": 10591,
+      "total": 11784,
+      "new_entrants": 894,
+      "exits": 738,
+      "retained": 10595,
       "retention_pct": 93.5
     },
     {
       "year": "2019-2020",
-      "total": 12026,
-      "new_entrants": 795,
-      "exits": 754,
-      "retained": 11026,
+      "total": 12030,
+      "new_entrants": 794,
+      "exits": 753,
+      "retained": 11031,
       "retention_pct": 93.6
     },
     {
       "year": "2020-2021",
-      "total": 12007,
+      "total": 12010,
       "new_entrants": 839,
-      "exits": 1036,
-      "retained": 10990,
+      "exits": 1038,
+      "retained": 10992,
       "retention_pct": 91.4
     },
     {
       "year": "2021-2022",
-      "total": 12500,
-      "new_entrants": 989,
-      "exits": 792,
-      "retained": 11215,
-      "retention_pct": 93.4
+      "total": 12506,
+      "new_entrants": 987,
+      "exits": 785,
+      "retained": 11225,
+      "retention_pct": 93.5
     },
     {
       "year": "2022-2023",
-      "total": 12020,
+      "total": 12023,
       "new_entrants": 822,
-      "exits": 1515,
+      "exits": 1521,
       "retained": 10985,
-      "retention_pct": 87.9
+      "retention_pct": 87.8
     },
     {
       "year": "2023-2024",
-      "total": 12493,
-      "new_entrants": 841,
+      "total": 12496,
+      "new_entrants": 840,
       "exits": 773,
-      "retained": 11247,
+      "retained": 11250,
       "retention_pct": 93.6
     }
   ],
@@ -366,9 +424,9 @@
     "brackets": [
       {
         "label": "Under $100K",
-        "count": 2690,
+        "count": 2692,
         "pct_of_physicians": 21.5,
-        "total_billing": 163250308,
+        "total_billing": 163378920,
         "pct_of_billing": 3.9
       },
       {
@@ -380,9 +438,9 @@
       },
       {
         "label": "$200K-$300K",
-        "count": 1702,
+        "count": 1703,
         "pct_of_physicians": 13.6,
-        "total_billing": 425890805,
+        "total_billing": 426186254,
         "pct_of_billing": 10.3
       },
       {
@@ -396,19 +454,19 @@
         "label": "$500K-$1M",
         "count": 2399,
         "pct_of_physicians": 19.2,
-        "total_billing": 1565971821,
-        "pct_of_billing": 37.8
+        "total_billing": 1565843210,
+        "pct_of_billing": 37.7
       },
       {
         "label": "$1M+",
         "count": 296,
         "pct_of_physicians": 2.4,
-        "total_billing": 437038691,
+        "total_billing": 436743242,
         "pct_of_billing": 10.5
       }
     ]
   },
-  "pareto": [
+  "pareto_lifetime": [
     {
       "top_pct": 1,
       "n_practitioners": 207,
@@ -416,24 +474,388 @@
     },
     {
       "top_pct": 5,
-      "n_practitioners": 1037,
+      "n_practitioners": 1038,
       "billing_share": 24.4
     },
     {
       "top_pct": 10,
-      "n_practitioners": 2074,
+      "n_practitioners": 2076,
       "billing_share": 38.7
     },
     {
       "top_pct": 20,
-      "n_practitioners": 4149,
+      "n_practitioners": 4153,
       "billing_share": 59.1
     },
     {
       "top_pct": 50,
-      "n_practitioners": 10374,
+      "n_practitioners": 10384,
       "billing_share": 89.4
     }
   ],
-  "total_unique_practitioners": 20748
+  "pareto_per_year": [
+    {
+      "year": "2011-2012",
+      "top_1_pct": 5.2,
+      "top_5_pct": 17.0,
+      "top_10_pct": 27.8,
+      "top_20_pct": 44.9
+    },
+    {
+      "year": "2012-2013",
+      "top_1_pct": 5.3,
+      "top_5_pct": 17.0,
+      "top_10_pct": 27.8,
+      "top_20_pct": 44.8
+    },
+    {
+      "year": "2013-2014",
+      "top_1_pct": 5.4,
+      "top_5_pct": 17.1,
+      "top_10_pct": 28.0,
+      "top_20_pct": 45.2
+    },
+    {
+      "year": "2014-2015",
+      "top_1_pct": 5.5,
+      "top_5_pct": 17.3,
+      "top_10_pct": 28.2,
+      "top_20_pct": 45.5
+    },
+    {
+      "year": "2015-2016",
+      "top_1_pct": 5.6,
+      "top_5_pct": 17.6,
+      "top_10_pct": 28.5,
+      "top_20_pct": 45.6
+    },
+    {
+      "year": "2016-2017",
+      "top_1_pct": 5.9,
+      "top_5_pct": 18.2,
+      "top_10_pct": 29.1,
+      "top_20_pct": 46.3
+    },
+    {
+      "year": "2017-2018",
+      "top_1_pct": 6.1,
+      "top_5_pct": 18.4,
+      "top_10_pct": 29.4,
+      "top_20_pct": 46.6
+    },
+    {
+      "year": "2018-2019",
+      "top_1_pct": 6.3,
+      "top_5_pct": 18.7,
+      "top_10_pct": 29.8,
+      "top_20_pct": 47.1
+    },
+    {
+      "year": "2019-2020",
+      "top_1_pct": 6.2,
+      "top_5_pct": 18.6,
+      "top_10_pct": 29.8,
+      "top_20_pct": 47.1
+    },
+    {
+      "year": "2020-2021",
+      "top_1_pct": 5.8,
+      "top_5_pct": 18.0,
+      "top_10_pct": 29.4,
+      "top_20_pct": 46.9
+    },
+    {
+      "year": "2021-2022",
+      "top_1_pct": 6.4,
+      "top_5_pct": 19.0,
+      "top_10_pct": 30.4,
+      "top_20_pct": 47.8
+    },
+    {
+      "year": "2022-2023",
+      "top_1_pct": 6.4,
+      "top_5_pct": 18.8,
+      "top_10_pct": 29.9,
+      "top_20_pct": 47.2
+    },
+    {
+      "year": "2023-2024",
+      "top_1_pct": 5.8,
+      "top_5_pct": 17.6,
+      "top_10_pct": 28.4,
+      "top_20_pct": 45.9
+    }
+  ],
+  "pareto_normalized": [
+    {
+      "top_pct": 1,
+      "n_practitioners": 203,
+      "billing_share": 5.9
+    },
+    {
+      "top_pct": 5,
+      "n_practitioners": 1017,
+      "billing_share": 18.2
+    },
+    {
+      "top_pct": 10,
+      "n_practitioners": 2034,
+      "billing_share": 29.4
+    },
+    {
+      "top_pct": 20,
+      "n_practitioners": 4068,
+      "billing_share": 46.8
+    },
+    {
+      "top_pct": 50,
+      "n_practitioners": 10171,
+      "billing_share": 80.4
+    }
+  ],
+  "yoy_stats": [
+    {
+      "from_year": "2011-2012",
+      "to_year": "2012-2013",
+      "n_matched": 8939,
+      "median_yoy": -0.4,
+      "mean_yoy": 7.7,
+      "q1": -9.3,
+      "q3": 9.5,
+      "iqr": 18.8
+    },
+    {
+      "from_year": "2012-2013",
+      "to_year": "2013-2014",
+      "n_matched": 9253,
+      "median_yoy": 2.1,
+      "mean_yoy": 10.8,
+      "q1": -7.8,
+      "q3": 13.1,
+      "iqr": 21.0
+    },
+    {
+      "from_year": "2013-2014",
+      "to_year": "2014-2015",
+      "n_matched": 8964,
+      "median_yoy": 0.0,
+      "mean_yoy": 8.7,
+      "q1": -9.2,
+      "q3": 10.9,
+      "iqr": 20.1
+    },
+    {
+      "from_year": "2014-2015",
+      "to_year": "2015-2016",
+      "n_matched": 9754,
+      "median_yoy": 0.0,
+      "mean_yoy": 9.3,
+      "q1": -9.6,
+      "q3": 10.8,
+      "iqr": 20.4
+    },
+    {
+      "from_year": "2015-2016",
+      "to_year": "2016-2017",
+      "n_matched": 10001,
+      "median_yoy": 0.8,
+      "mean_yoy": 10.7,
+      "q1": -9.0,
+      "q3": 12.4,
+      "iqr": 21.4
+    },
+    {
+      "from_year": "2016-2017",
+      "to_year": "2017-2018",
+      "n_matched": 10277,
+      "median_yoy": -1.7,
+      "mean_yoy": 7.8,
+      "q1": -11.3,
+      "q3": 9.4,
+      "iqr": 20.7
+    },
+    {
+      "from_year": "2017-2018",
+      "to_year": "2018-2019",
+      "n_matched": 10595,
+      "median_yoy": 1.1,
+      "mean_yoy": 11.7,
+      "q1": -8.8,
+      "q3": 12.3,
+      "iqr": 21.1
+    },
+    {
+      "from_year": "2018-2019",
+      "to_year": "2019-2020",
+      "n_matched": 11031,
+      "median_yoy": 2.8,
+      "mean_yoy": 12.8,
+      "q1": -7.5,
+      "q3": 14.2,
+      "iqr": 21.7
+    },
+    {
+      "from_year": "2019-2020",
+      "to_year": "2020-2021",
+      "n_matched": 10992,
+      "median_yoy": -1.8,
+      "mean_yoy": 6.3,
+      "q1": -16.4,
+      "q3": 12.6,
+      "iqr": 29.0
+    },
+    {
+      "from_year": "2020-2021",
+      "to_year": "2021-2022",
+      "n_matched": 11225,
+      "median_yoy": 6.2,
+      "mean_yoy": 17.2,
+      "q1": -6.1,
+      "q3": 21.6,
+      "iqr": 27.7
+    },
+    {
+      "from_year": "2021-2022",
+      "to_year": "2022-2023",
+      "n_matched": 10985,
+      "median_yoy": -3.4,
+      "mean_yoy": 4.1,
+      "q1": -16.7,
+      "q3": 9.2,
+      "iqr": 25.9
+    },
+    {
+      "from_year": "2022-2023",
+      "to_year": "2023-2024",
+      "n_matched": 11250,
+      "median_yoy": 17.1,
+      "mean_yoy": 34.6,
+      "q1": 1.2,
+      "q3": 43.7,
+      "iqr": 42.5
+    }
+  ],
+  "section_drift": [
+    {
+      "year": "2011-2012",
+      "practitioner_total": 2431199585,
+      "organization_total": 197376797,
+      "combined_total": 2628576383,
+      "practitioner_share_pct": 92.5,
+      "n_orgs": 191
+    },
+    {
+      "year": "2012-2013",
+      "practitioner_total": 2477685277,
+      "organization_total": 173317585,
+      "combined_total": 2651002862,
+      "practitioner_share_pct": 93.5,
+      "n_orgs": 189
+    },
+    {
+      "year": "2013-2014",
+      "practitioner_total": 2625401742,
+      "organization_total": 268612981,
+      "combined_total": 2894014723,
+      "practitioner_share_pct": 90.7,
+      "n_orgs": 152
+    },
+    {
+      "year": "2014-2015",
+      "practitioner_total": 2705051510,
+      "organization_total": 159904612,
+      "combined_total": 2864956122,
+      "practitioner_share_pct": 94.4,
+      "n_orgs": 149
+    },
+    {
+      "year": "2015-2016",
+      "practitioner_total": 2770377361,
+      "organization_total": 129057853,
+      "combined_total": 2899435215,
+      "practitioner_share_pct": 95.5,
+      "n_orgs": 179
+    },
+    {
+      "year": "2016-2017",
+      "practitioner_total": 2938650787,
+      "organization_total": 396155415,
+      "combined_total": 3334806203,
+      "practitioner_share_pct": 88.1,
+      "n_orgs": 173
+    },
+    {
+      "year": "2017-2018",
+      "practitioner_total": 2950285124,
+      "organization_total": 163981129,
+      "combined_total": 3114266253,
+      "practitioner_share_pct": 94.7,
+      "n_orgs": 187
+    },
+    {
+      "year": "2018-2019",
+      "practitioner_total": 3124394939,
+      "organization_total": 339367603,
+      "combined_total": 3463762542,
+      "practitioner_share_pct": 90.2,
+      "n_orgs": 178
+    },
+    {
+      "year": "2019-2020",
+      "practitioner_total": 3285997671,
+      "organization_total": 367721403,
+      "combined_total": 3653719074,
+      "practitioner_share_pct": 89.9,
+      "n_orgs": 181
+    },
+    {
+      "year": "2020-2021",
+      "practitioner_total": 3242742085,
+      "organization_total": 311148464,
+      "combined_total": 3553890549,
+      "practitioner_share_pct": 91.2,
+      "n_orgs": 178
+    },
+    {
+      "year": "2021-2022",
+      "practitioner_total": 3554281167,
+      "organization_total": 266952236,
+      "combined_total": 3821233403,
+      "practitioner_share_pct": 93.0,
+      "n_orgs": 178
+    },
+    {
+      "year": "2022-2023",
+      "practitioner_total": 3390782939,
+      "organization_total": 565251421,
+      "combined_total": 3956034360,
+      "practitioner_share_pct": 85.7,
+      "n_orgs": 326
+    },
+    {
+      "year": "2023-2024",
+      "practitioner_total": 4147996254,
+      "organization_total": 615353568,
+      "combined_total": 4763349822,
+      "practitioner_share_pct": 87.1,
+      "n_orgs": 358
+    }
+  ],
+  "caveats": [
+    "All amounts are gross billings. Practitioners pay practice expenses (overhead, staff, equipment) from these amounts. Net income cannot be determined.",
+    "Only practitioners billing $25,000+ are individually listed. 'New entrants' may include physicians who crossed this threshold, not just those starting practice. 'Exits' may include physicians who dipped below, not just those stopping practice.",
+    "Cross-year practitioner matching uses normalized names. Name changes (marriage, legal) cause false exits/entries. Approximately 3-6 same-name duplicates per year are disambiguated.",
+    "Section classification methodology changed over time: lab, radiology, and FPSC payments shifted from 'Practitioners' to 'Organizations' in later years, affecting practitioner counts and totals.",
+    "Amounts are not adjusted for changes in fee schedule or scope of practice. The 2023-24 spike reflects the new Physician Master Agreement fee increases and LFP model payments.",
+    "Alternative Payment Plans (APP), salaried positions, MOCAP on-call payments, and LFP panel/time payments are NOT included. This data covers fee-for-service only.",
+    "Real (inflation-adjusted) values use BC CPI (March values, StatsCan 18-10-0005-01), base year 2023-2024."
+  ],
+  "methodology": {
+    "duplicate_handling": "Same-name practitioners in the same fiscal year are treated as separate individuals (disambiguated with index suffixes).",
+    "cross_year_matching": "Names are normalized (lowercase, titles removed, whitespace collapsed) for cross-year matching. This reduces but does not eliminate false matches/misses.",
+    "percentiles": "Linear interpolation method (equivalent to numpy default).",
+    "gini": "Standard discrete Gini formula. 95% CI via 2000-iteration bootstrap (seed=42).",
+    "pareto_normalized": "Lifetime billing divided by number of years present, to control for longevity bias.",
+    "inflation": "BC CPI deflators applied to convert to 2023-2024 constant dollars."
+  }
 }
