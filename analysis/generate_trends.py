@@ -245,28 +245,35 @@ def main():
             "retention_pct": retention_pct,
         })
 
-    # ── 4. Income brackets ───────────────────────────────────────────
-    latest = all_years[-1]
-    amounts = list(by_year[latest].values())
+    # ── 4. Income brackets (per year) ──────────────────────────────
     brackets_def = [
-        (0, 100_000, "Under $100K"),
-        (100_000, 200_000, "$100K-$200K"),
-        (200_000, 300_000, "$200K-$300K"),
-        (300_000, 500_000, "$300K-$500K"),
-        (500_000, 1_000_000, "$500K-$1M"),
+        (0, 100_000, "<$100K"),
+        (100_000, 200_000, "$100–200K"),
+        (200_000, 300_000, "$200–300K"),
+        (300_000, 400_000, "$300–400K"),
+        (400_000, 500_000, "$400–500K"),
+        (500_000, 750_000, "$500–750K"),
+        (750_000, 1_000_000, "$750K–1M"),
         (1_000_000, 50_000_000, "$1M+"),
     ]
-    total_n, total_billing = len(amounts), sum(amounts)
-    brackets = []
-    for lo, hi, label in brackets_def:
-        ib = [a for a in amounts if lo <= a < hi]
-        brackets.append({
-            "label": label,
-            "count": len(ib),
-            "pct_of_physicians": round(len(ib) / total_n * 100, 1),
-            "total_billing": round(sum(ib)),
-            "pct_of_billing": round(sum(ib) / total_billing * 100, 1),
-        })
+    income_brackets_by_year = {}
+    for yr in all_years:
+        amounts = list(by_year[yr].values())
+        total_n, total_billing = len(amounts), sum(amounts)
+        yr_brackets = []
+        for lo, hi, label in brackets_def:
+            ib = [a for a in amounts if lo <= a < hi]
+            yr_brackets.append({
+                "label": label,
+                "count": len(ib),
+                "pct_of_physicians": round(len(ib) / total_n * 100, 1),
+                "total_billing": round(sum(ib)),
+                "pct_of_billing": round(sum(ib) / total_billing * 100, 1),
+            })
+        income_brackets_by_year[yr] = yr_brackets
+    # Keep backwards-compatible single-year key
+    latest = all_years[-1]
+    brackets = income_brackets_by_year[latest]
 
     # ── 5. Pareto — lifetime, per-year, and normalized ───────────────
     # Lifetime (raw)
@@ -395,6 +402,7 @@ def main():
         "gini_bootstrap_test": gini_test,
         "turnover": turnover,
         "income_brackets": {"year": latest, "brackets": brackets},
+        "income_brackets_by_year": income_brackets_by_year,
         "pareto_lifetime": pareto_lifetime,
         "pareto_per_year": pareto_per_year,
         "pareto_normalized": pareto_normalized,

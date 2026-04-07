@@ -436,39 +436,809 @@
     "year": "2023-2024",
     "brackets": [
       {
-        "label": "Under $100K",
+        "label": "<$100K",
         "count": 2692,
         "pct_of_physicians": 21.5,
         "total_billing": 163378920,
         "pct_of_billing": 3.9
       },
       {
-        "label": "$100K-$200K",
+        "label": "$100\u2013200K",
         "count": 2314,
         "pct_of_physicians": 18.5,
         "total_billing": 335105143,
         "pct_of_billing": 8.1
       },
       {
-        "label": "$200K-$300K",
+        "label": "$200\u2013300K",
         "count": 1703,
         "pct_of_physicians": 13.6,
         "total_billing": 426186254,
         "pct_of_billing": 10.3
       },
       {
-        "label": "$300K-$500K",
-        "count": 3092,
-        "pct_of_physicians": 24.7,
-        "total_billing": 1220739486,
-        "pct_of_billing": 29.4
+        "label": "$300\u2013400K",
+        "count": 1666,
+        "pct_of_physicians": 13.3,
+        "total_billing": 582963169,
+        "pct_of_billing": 14.1
       },
       {
-        "label": "$500K-$1M",
-        "count": 2399,
-        "pct_of_physicians": 19.2,
-        "total_billing": 1565843210,
-        "pct_of_billing": 37.7
+        "label": "$400\u2013500K",
+        "count": 1426,
+        "pct_of_physicians": 11.4,
+        "total_billing": 637776317,
+        "pct_of_billing": 15.4
+      },
+      {
+        "label": "$500\u2013750K",
+        "count": 1894,
+        "pct_of_physicians": 15.2,
+        "total_billing": 1136634468,
+        "pct_of_billing": 27.4
+      },
+      {
+        "label": "$750K\u20131M",
+        "count": 505,
+        "pct_of_physicians": 4.0,
+        "total_billing": 429208742,
+        "pct_of_billing": 10.3
+      },
+      {
+        "label": "$1M+",
+        "count": 296,
+        "pct_of_physicians": 2.4,
+        "total_billing": 436743242,
+        "pct_of_billing": 10.5
+      }
+    ]
+  },
+  "income_brackets_by_year": {
+    "2011-2012": [
+      {
+        "label": "<$100K",
+        "count": 2381,
+        "pct_of_physicians": 25.0,
+        "total_billing": 139194052,
+        "pct_of_billing": 5.7
+      },
+      {
+        "label": "$100\u2013200K",
+        "count": 2130,
+        "pct_of_physicians": 22.4,
+        "total_billing": 315590575,
+        "pct_of_billing": 13.0
+      },
+      {
+        "label": "$200\u2013300K",
+        "count": 1856,
+        "pct_of_physicians": 19.5,
+        "total_billing": 462223341,
+        "pct_of_billing": 19.0
+      },
+      {
+        "label": "$300\u2013400K",
+        "count": 1441,
+        "pct_of_physicians": 15.1,
+        "total_billing": 496426774,
+        "pct_of_billing": 20.4
+      },
+      {
+        "label": "$400\u2013500K",
+        "count": 750,
+        "pct_of_physicians": 7.9,
+        "total_billing": 332732823,
+        "pct_of_billing": 13.7
+      },
+      {
+        "label": "$500\u2013750K",
+        "count": 712,
+        "pct_of_physicians": 7.5,
+        "total_billing": 421160550,
+        "pct_of_billing": 17.3
+      },
+      {
+        "label": "$750K\u20131M",
+        "count": 165,
+        "pct_of_physicians": 1.7,
+        "total_billing": 140724517,
+        "pct_of_billing": 5.8
+      },
+      {
+        "label": "$1M+",
+        "count": 91,
+        "pct_of_physicians": 1.0,
+        "total_billing": 123146954,
+        "pct_of_billing": 5.1
+      }
+    ],
+    "2012-2013": [
+      {
+        "label": "<$100K",
+        "count": 2397,
+        "pct_of_physicians": 24.5,
+        "total_billing": 141924379,
+        "pct_of_billing": 5.7
+      },
+      {
+        "label": "$100\u2013200K",
+        "count": 2297,
+        "pct_of_physicians": 23.5,
+        "total_billing": 340126935,
+        "pct_of_billing": 13.7
+      },
+      {
+        "label": "$200\u2013300K",
+        "count": 1922,
+        "pct_of_physicians": 19.7,
+        "total_billing": 479160299,
+        "pct_of_billing": 19.3
+      },
+      {
+        "label": "$300\u2013400K",
+        "count": 1406,
+        "pct_of_physicians": 14.4,
+        "total_billing": 485298100,
+        "pct_of_billing": 19.6
+      },
+      {
+        "label": "$400\u2013500K",
+        "count": 791,
+        "pct_of_physicians": 8.1,
+        "total_billing": 351889190,
+        "pct_of_billing": 14.2
+      },
+      {
+        "label": "$500\u2013750K",
+        "count": 704,
+        "pct_of_physicians": 7.2,
+        "total_billing": 416511899,
+        "pct_of_billing": 16.8
+      },
+      {
+        "label": "$750K\u20131M",
+        "count": 154,
+        "pct_of_physicians": 1.6,
+        "total_billing": 129607872,
+        "pct_of_billing": 5.2
+      },
+      {
+        "label": "$1M+",
+        "count": 100,
+        "pct_of_physicians": 1.0,
+        "total_billing": 133166603,
+        "pct_of_billing": 5.4
+      }
+    ],
+    "2013-2014": [
+      {
+        "label": "<$100K",
+        "count": 2621,
+        "pct_of_physicians": 25.6,
+        "total_billing": 154740197,
+        "pct_of_billing": 5.9
+      },
+      {
+        "label": "$100\u2013200K",
+        "count": 2255,
+        "pct_of_physicians": 22.0,
+        "total_billing": 331003101,
+        "pct_of_billing": 12.6
+      },
+      {
+        "label": "$200\u2013300K",
+        "count": 1933,
+        "pct_of_physicians": 18.9,
+        "total_billing": 483318393,
+        "pct_of_billing": 18.4
+      },
+      {
+        "label": "$300\u2013400K",
+        "count": 1506,
+        "pct_of_physicians": 14.7,
+        "total_billing": 521174562,
+        "pct_of_billing": 19.9
+      },
+      {
+        "label": "$400\u2013500K",
+        "count": 864,
+        "pct_of_physicians": 8.4,
+        "total_billing": 385028501,
+        "pct_of_billing": 14.7
+      },
+      {
+        "label": "$500\u2013750K",
+        "count": 772,
+        "pct_of_physicians": 7.5,
+        "total_billing": 458245778,
+        "pct_of_billing": 17.5
+      },
+      {
+        "label": "$750K\u20131M",
+        "count": 182,
+        "pct_of_physicians": 1.8,
+        "total_billing": 154631298,
+        "pct_of_billing": 5.9
+      },
+      {
+        "label": "$1M+",
+        "count": 97,
+        "pct_of_physicians": 0.9,
+        "total_billing": 137259913,
+        "pct_of_billing": 5.2
+      }
+    ],
+    "2014-2015": [
+      {
+        "label": "<$100K",
+        "count": 2623,
+        "pct_of_physicians": 25.1,
+        "total_billing": 154567592,
+        "pct_of_billing": 5.7
+      },
+      {
+        "label": "$100\u2013200K",
+        "count": 2391,
+        "pct_of_physicians": 22.9,
+        "total_billing": 351849238,
+        "pct_of_billing": 13.0
+      },
+      {
+        "label": "$200\u2013300K",
+        "count": 1953,
+        "pct_of_physicians": 18.7,
+        "total_billing": 486601115,
+        "pct_of_billing": 18.0
+      },
+      {
+        "label": "$300\u2013400K",
+        "count": 1480,
+        "pct_of_physicians": 14.2,
+        "total_billing": 514295976,
+        "pct_of_billing": 19.0
+      },
+      {
+        "label": "$400\u2013500K",
+        "count": 897,
+        "pct_of_physicians": 8.6,
+        "total_billing": 399426268,
+        "pct_of_billing": 14.8
+      },
+      {
+        "label": "$500\u2013750K",
+        "count": 814,
+        "pct_of_physicians": 7.8,
+        "total_billing": 482940940,
+        "pct_of_billing": 17.9
+      },
+      {
+        "label": "$750K\u20131M",
+        "count": 190,
+        "pct_of_physicians": 1.8,
+        "total_billing": 161605212,
+        "pct_of_billing": 6.0
+      },
+      {
+        "label": "$1M+",
+        "count": 110,
+        "pct_of_physicians": 1.1,
+        "total_billing": 153765169,
+        "pct_of_billing": 5.7
+      }
+    ],
+    "2015-2016": [
+      {
+        "label": "<$100K",
+        "count": 2646,
+        "pct_of_physicians": 24.8,
+        "total_billing": 156849687,
+        "pct_of_billing": 5.7
+      },
+      {
+        "label": "$100\u2013200K",
+        "count": 2450,
+        "pct_of_physicians": 22.9,
+        "total_billing": 356661999,
+        "pct_of_billing": 12.9
+      },
+      {
+        "label": "$200\u2013300K",
+        "count": 2029,
+        "pct_of_physicians": 19.0,
+        "total_billing": 503974768,
+        "pct_of_billing": 18.2
+      },
+      {
+        "label": "$300\u2013400K",
+        "count": 1525,
+        "pct_of_physicians": 14.3,
+        "total_billing": 529198903,
+        "pct_of_billing": 19.1
+      },
+      {
+        "label": "$400\u2013500K",
+        "count": 906,
+        "pct_of_physicians": 8.5,
+        "total_billing": 403993896,
+        "pct_of_billing": 14.6
+      },
+      {
+        "label": "$500\u2013750K",
+        "count": 808,
+        "pct_of_physicians": 7.6,
+        "total_billing": 477596199,
+        "pct_of_billing": 17.2
+      },
+      {
+        "label": "$750K\u20131M",
+        "count": 194,
+        "pct_of_physicians": 1.8,
+        "total_billing": 166369024,
+        "pct_of_billing": 6.0
+      },
+      {
+        "label": "$1M+",
+        "count": 125,
+        "pct_of_physicians": 1.2,
+        "total_billing": 175732887,
+        "pct_of_billing": 6.3
+      }
+    ],
+    "2016-2017": [
+      {
+        "label": "<$100K",
+        "count": 2818,
+        "pct_of_physicians": 25.3,
+        "total_billing": 166647516,
+        "pct_of_billing": 5.7
+      },
+      {
+        "label": "$100\u2013200K",
+        "count": 2490,
+        "pct_of_physicians": 22.4,
+        "total_billing": 363081861,
+        "pct_of_billing": 12.4
+      },
+      {
+        "label": "$200\u2013300K",
+        "count": 2037,
+        "pct_of_physicians": 18.3,
+        "total_billing": 506584797,
+        "pct_of_billing": 17.2
+      },
+      {
+        "label": "$300\u2013400K",
+        "count": 1558,
+        "pct_of_physicians": 14.0,
+        "total_billing": 540559544,
+        "pct_of_billing": 18.4
+      },
+      {
+        "label": "$400\u2013500K",
+        "count": 959,
+        "pct_of_physicians": 8.6,
+        "total_billing": 426765604,
+        "pct_of_billing": 14.5
+      },
+      {
+        "label": "$500\u2013750K",
+        "count": 888,
+        "pct_of_physicians": 8.0,
+        "total_billing": 525238785,
+        "pct_of_billing": 17.9
+      },
+      {
+        "label": "$750K\u20131M",
+        "count": 221,
+        "pct_of_physicians": 2.0,
+        "total_billing": 187278977,
+        "pct_of_billing": 6.4
+      },
+      {
+        "label": "$1M+",
+        "count": 157,
+        "pct_of_physicians": 1.4,
+        "total_billing": 222493703,
+        "pct_of_billing": 7.6
+      }
+    ],
+    "2017-2018": [
+      {
+        "label": "<$100K",
+        "count": 2913,
+        "pct_of_physicians": 25.7,
+        "total_billing": 175084883,
+        "pct_of_billing": 5.9
+      },
+      {
+        "label": "$100\u2013200K",
+        "count": 2656,
+        "pct_of_physicians": 23.4,
+        "total_billing": 391171216,
+        "pct_of_billing": 13.3
+      },
+      {
+        "label": "$200\u2013300K",
+        "count": 2032,
+        "pct_of_physicians": 17.9,
+        "total_billing": 506105466,
+        "pct_of_billing": 17.2
+      },
+      {
+        "label": "$300\u2013400K",
+        "count": 1552,
+        "pct_of_physicians": 13.7,
+        "total_billing": 536555570,
+        "pct_of_billing": 18.2
+      },
+      {
+        "label": "$400\u2013500K",
+        "count": 932,
+        "pct_of_physicians": 8.2,
+        "total_billing": 415306637,
+        "pct_of_billing": 14.1
+      },
+      {
+        "label": "$500\u2013750K",
+        "count": 883,
+        "pct_of_physicians": 7.8,
+        "total_billing": 522057740,
+        "pct_of_billing": 17.7
+      },
+      {
+        "label": "$750K\u20131M",
+        "count": 215,
+        "pct_of_physicians": 1.9,
+        "total_billing": 184010488,
+        "pct_of_billing": 6.2
+      },
+      {
+        "label": "$1M+",
+        "count": 150,
+        "pct_of_physicians": 1.3,
+        "total_billing": 219993125,
+        "pct_of_billing": 7.5
+      }
+    ],
+    "2018-2019": [
+      {
+        "label": "<$100K",
+        "count": 3039,
+        "pct_of_physicians": 25.8,
+        "total_billing": 184412842,
+        "pct_of_billing": 5.9
+      },
+      {
+        "label": "$100\u2013200K",
+        "count": 2716,
+        "pct_of_physicians": 23.0,
+        "total_billing": 398413086,
+        "pct_of_billing": 12.8
+      },
+      {
+        "label": "$200\u2013300K",
+        "count": 2090,
+        "pct_of_physicians": 17.7,
+        "total_billing": 520129348,
+        "pct_of_billing": 16.6
+      },
+      {
+        "label": "$300\u2013400K",
+        "count": 1570,
+        "pct_of_physicians": 13.3,
+        "total_billing": 543602068,
+        "pct_of_billing": 17.4
+      },
+      {
+        "label": "$400\u2013500K",
+        "count": 978,
+        "pct_of_physicians": 8.3,
+        "total_billing": 436879454,
+        "pct_of_billing": 14.0
+      },
+      {
+        "label": "$500\u2013750K",
+        "count": 979,
+        "pct_of_physicians": 8.3,
+        "total_billing": 583487743,
+        "pct_of_billing": 18.7
+      },
+      {
+        "label": "$750K\u20131M",
+        "count": 243,
+        "pct_of_physicians": 2.1,
+        "total_billing": 206423856,
+        "pct_of_billing": 6.6
+      },
+      {
+        "label": "$1M+",
+        "count": 169,
+        "pct_of_physicians": 1.4,
+        "total_billing": 251046542,
+        "pct_of_billing": 8.0
+      }
+    ],
+    "2019-2020": [
+      {
+        "label": "<$100K",
+        "count": 3008,
+        "pct_of_physicians": 25.0,
+        "total_billing": 181966612,
+        "pct_of_billing": 5.5
+      },
+      {
+        "label": "$100\u2013200K",
+        "count": 2616,
+        "pct_of_physicians": 21.7,
+        "total_billing": 379872760,
+        "pct_of_billing": 11.6
+      },
+      {
+        "label": "$200\u2013300K",
+        "count": 2206,
+        "pct_of_physicians": 18.3,
+        "total_billing": 546288587,
+        "pct_of_billing": 16.6
+      },
+      {
+        "label": "$300\u2013400K",
+        "count": 1644,
+        "pct_of_physicians": 13.7,
+        "total_billing": 569296792,
+        "pct_of_billing": 17.3
+      },
+      {
+        "label": "$400\u2013500K",
+        "count": 1040,
+        "pct_of_physicians": 8.6,
+        "total_billing": 465421809,
+        "pct_of_billing": 14.2
+      },
+      {
+        "label": "$500\u2013750K",
+        "count": 1044,
+        "pct_of_physicians": 8.7,
+        "total_billing": 625350680,
+        "pct_of_billing": 19.0
+      },
+      {
+        "label": "$750K\u20131M",
+        "count": 288,
+        "pct_of_physicians": 2.4,
+        "total_billing": 244586818,
+        "pct_of_billing": 7.4
+      },
+      {
+        "label": "$1M+",
+        "count": 184,
+        "pct_of_physicians": 1.5,
+        "total_billing": 273213614,
+        "pct_of_billing": 8.3
+      }
+    ],
+    "2020-2021": [
+      {
+        "label": "<$100K",
+        "count": 3073,
+        "pct_of_physicians": 25.6,
+        "total_billing": 183561027,
+        "pct_of_billing": 5.7
+      },
+      {
+        "label": "$100\u2013200K",
+        "count": 2621,
+        "pct_of_physicians": 21.8,
+        "total_billing": 387821567,
+        "pct_of_billing": 12.0
+      },
+      {
+        "label": "$200\u2013300K",
+        "count": 2157,
+        "pct_of_physicians": 18.0,
+        "total_billing": 536488199,
+        "pct_of_billing": 16.5
+      },
+      {
+        "label": "$300\u2013400K",
+        "count": 1626,
+        "pct_of_physicians": 13.5,
+        "total_billing": 562387396,
+        "pct_of_billing": 17.3
+      },
+      {
+        "label": "$400\u2013500K",
+        "count": 1000,
+        "pct_of_physicians": 8.3,
+        "total_billing": 446611826,
+        "pct_of_billing": 13.8
+      },
+      {
+        "label": "$500\u2013750K",
+        "count": 1097,
+        "pct_of_physicians": 9.1,
+        "total_billing": 658516536,
+        "pct_of_billing": 20.3
+      },
+      {
+        "label": "$750K\u20131M",
+        "count": 274,
+        "pct_of_physicians": 2.3,
+        "total_billing": 233875404,
+        "pct_of_billing": 7.2
+      },
+      {
+        "label": "$1M+",
+        "count": 162,
+        "pct_of_physicians": 1.3,
+        "total_billing": 233480130,
+        "pct_of_billing": 7.2
+      }
+    ],
+    "2021-2022": [
+      {
+        "label": "<$100K",
+        "count": 3131,
+        "pct_of_physicians": 25.0,
+        "total_billing": 185807902,
+        "pct_of_billing": 5.2
+      },
+      {
+        "label": "$100\u2013200K",
+        "count": 2663,
+        "pct_of_physicians": 21.3,
+        "total_billing": 388897731,
+        "pct_of_billing": 10.9
+      },
+      {
+        "label": "$200\u2013300K",
+        "count": 2137,
+        "pct_of_physicians": 17.1,
+        "total_billing": 534399295,
+        "pct_of_billing": 15.0
+      },
+      {
+        "label": "$300\u2013400K",
+        "count": 1684,
+        "pct_of_physicians": 13.5,
+        "total_billing": 583431737,
+        "pct_of_billing": 16.4
+      },
+      {
+        "label": "$400\u2013500K",
+        "count": 1102,
+        "pct_of_physicians": 8.8,
+        "total_billing": 492513895,
+        "pct_of_billing": 13.9
+      },
+      {
+        "label": "$500\u2013750K",
+        "count": 1201,
+        "pct_of_physicians": 9.6,
+        "total_billing": 720494904,
+        "pct_of_billing": 20.3
+      },
+      {
+        "label": "$750K\u20131M",
+        "count": 351,
+        "pct_of_physicians": 2.8,
+        "total_billing": 298923602,
+        "pct_of_billing": 8.4
+      },
+      {
+        "label": "$1M+",
+        "count": 237,
+        "pct_of_physicians": 1.9,
+        "total_billing": 349812101,
+        "pct_of_billing": 9.8
+      }
+    ],
+    "2022-2023": [
+      {
+        "label": "<$100K",
+        "count": 3031,
+        "pct_of_physicians": 25.2,
+        "total_billing": 186547443,
+        "pct_of_billing": 5.5
+      },
+      {
+        "label": "$100\u2013200K",
+        "count": 2494,
+        "pct_of_physicians": 20.7,
+        "total_billing": 365939072,
+        "pct_of_billing": 10.8
+      },
+      {
+        "label": "$200\u2013300K",
+        "count": 2106,
+        "pct_of_physicians": 17.5,
+        "total_billing": 526367257,
+        "pct_of_billing": 15.5
+      },
+      {
+        "label": "$300\u2013400K",
+        "count": 1658,
+        "pct_of_physicians": 13.8,
+        "total_billing": 575688998,
+        "pct_of_billing": 17.0
+      },
+      {
+        "label": "$400\u2013500K",
+        "count": 1095,
+        "pct_of_physicians": 9.1,
+        "total_billing": 489684834,
+        "pct_of_billing": 14.4
+      },
+      {
+        "label": "$500\u2013750K",
+        "count": 1124,
+        "pct_of_physicians": 9.3,
+        "total_billing": 670216109,
+        "pct_of_billing": 19.8
+      },
+      {
+        "label": "$750K\u20131M",
+        "count": 294,
+        "pct_of_physicians": 2.4,
+        "total_billing": 248637784,
+        "pct_of_billing": 7.3
+      },
+      {
+        "label": "$1M+",
+        "count": 221,
+        "pct_of_physicians": 1.8,
+        "total_billing": 327701441,
+        "pct_of_billing": 9.7
+      }
+    ],
+    "2023-2024": [
+      {
+        "label": "<$100K",
+        "count": 2692,
+        "pct_of_physicians": 21.5,
+        "total_billing": 163378920,
+        "pct_of_billing": 3.9
+      },
+      {
+        "label": "$100\u2013200K",
+        "count": 2314,
+        "pct_of_physicians": 18.5,
+        "total_billing": 335105143,
+        "pct_of_billing": 8.1
+      },
+      {
+        "label": "$200\u2013300K",
+        "count": 1703,
+        "pct_of_physicians": 13.6,
+        "total_billing": 426186254,
+        "pct_of_billing": 10.3
+      },
+      {
+        "label": "$300\u2013400K",
+        "count": 1666,
+        "pct_of_physicians": 13.3,
+        "total_billing": 582963169,
+        "pct_of_billing": 14.1
+      },
+      {
+        "label": "$400\u2013500K",
+        "count": 1426,
+        "pct_of_physicians": 11.4,
+        "total_billing": 637776317,
+        "pct_of_billing": 15.4
+      },
+      {
+        "label": "$500\u2013750K",
+        "count": 1894,
+        "pct_of_physicians": 15.2,
+        "total_billing": 1136634468,
+        "pct_of_billing": 27.4
+      },
+      {
+        "label": "$750K\u20131M",
+        "count": 505,
+        "pct_of_physicians": 4.0,
+        "total_billing": 429208742,
+        "pct_of_billing": 10.3
       },
       {
         "label": "$1M+",

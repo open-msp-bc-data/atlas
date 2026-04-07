@@ -5,7 +5,7 @@ import DataPanel from './components/DataPanel';
 import PerCapitaTable from './components/PerCapitaTable';
 import BillingTrends from './components/BillingTrends';
 import TrendPanel from './components/TrendPanel';
-import { fetchPhysicians, fetchAggregations, fetchHeatmap } from './api';
+import { fetchPhysicians, fetchAggregations, fetchHeatmap, getTotalPhysicians } from './api';
 import './App.css';
 
 const YEARS = [
@@ -96,6 +96,7 @@ function App() {
   const [selectedPhysician, setSelectedPhysician] = useState(null);
   const [mapBounds, setMapBounds] = useState(null);
   const [infoOpen, setInfoOpen] = useState(false);
+  const [totalPhysicians, setTotalPhysicians] = useState(0);
 
   // Filters — specialty/city/health_authority are now arrays (multi-select)
   const [filters, setFilters] = useState({
@@ -112,19 +113,20 @@ function App() {
     setLoading(true);
     setError(null);
     try {
-      // Fetch with no server-side specialty/city/ha filters (we filter client-side)
-      const params = { limit: 500 };
+      const params = {};
       if (filters.year) params.year = filters.year;
 
-      const [physData, aggData, heatData] = await Promise.all([
+      const [physData, aggData, heatData, total] = await Promise.all([
         fetchPhysicians(params),
         fetchAggregations({ fiscal_year: filters.year, geo_level: 'city' }),
         filters.showHeatmap ? fetchHeatmap({ year: filters.year }) : Promise.resolve([]),
+        getTotalPhysicians(),
       ]);
 
       setPhysicians(physData);
       setAggregations(aggData);
       setHeatmapData(heatData);
+      setTotalPhysicians(total);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -180,7 +182,10 @@ function App() {
           <div className="sidebar-section">
             <h3>Summary</h3>
             <p>
-              <strong>{filteredPhysicians.length}</strong> physicians displayed
+              <strong>{filteredPhysicians.length.toLocaleString()}</strong>{' '}
+              {filters.specialty.length > 0 || filters.city.length > 0 || filters.health_authority.length > 0
+                ? `of ${totalPhysicians.toLocaleString()} physicians (filtered)`
+                : `physicians in ${filters.year}`}
             </p>
             <p>
               <strong>{aggregations.length}</strong> aggregated regions
@@ -214,6 +219,7 @@ function App() {
             showHeatmap={filters.showHeatmap}
             onSelectPhysician={setSelectedPhysician}
             onBoundsChange={setMapBounds}
+            selectedHealthAuthorities={filters.health_authority}
           />
 
           <DataPanel aggregations={aggregations} year={filters.year} mapBounds={mapBounds} />

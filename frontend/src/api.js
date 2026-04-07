@@ -19,8 +19,12 @@ export async function fetchPhysicians(params = {}) {
     );
   }
 
-  const limit = params.limit ? parseInt(params.limit, 10) : 500;
-  return physicians.slice(0, limit);
+  return physicians;
+}
+
+export async function getTotalPhysicians() {
+  const data = await loadData();
+  return data.total_physicians;
 }
 
 export async function fetchAggregations(params = {}) {

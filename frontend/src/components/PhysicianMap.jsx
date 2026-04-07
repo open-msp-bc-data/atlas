@@ -62,17 +62,62 @@ function createCircleIcon(color) {
   });
 }
 
+// Simplified health authority boundary polygons (approximate)
+const HA_BOUNDARIES = {
+  'Interior Health': {
+    color: '#B45309',
+    coords: [
+      [48.9, -121.0], [49.0, -119.0], [49.0, -115.5], [50.0, -114.7],
+      [51.5, -116.5], [53.0, -119.5], [52.5, -121.5], [51.0, -122.0],
+      [49.5, -121.5], [48.9, -121.0],
+    ],
+  },
+  'Fraser Health': {
+    color: '#2563EB',
+    coords: [
+      [48.9, -123.0], [49.0, -121.3], [49.5, -121.3], [49.5, -122.3],
+      [49.4, -122.7], [49.35, -123.0], [48.9, -123.0],
+    ],
+  },
+  'Vancouver Coastal Health': {
+    color: '#1B7340',
+    coords: [
+      [49.0, -123.3], [49.35, -123.0], [49.4, -122.7], [49.5, -122.3],
+      [50.5, -122.0], [51.5, -125.5], [50.5, -126.5], [49.3, -124.0],
+      [49.0, -123.3],
+    ],
+  },
+  'Island Health': {
+    color: '#7C3AED',
+    coords: [
+      [48.3, -124.8], [48.4, -123.2], [49.0, -123.3], [49.3, -124.0],
+      [50.5, -126.5], [50.8, -128.3], [50.0, -127.5], [49.0, -126.0],
+      [48.3, -124.8],
+    ],
+  },
+  'Northern Health': {
+    color: '#DC2626',
+    coords: [
+      [51.5, -116.5], [53.0, -119.5], [52.5, -121.5], [51.0, -122.0],
+      [51.5, -125.5], [50.8, -128.3], [54.0, -133.5], [60.0, -139.0],
+      [60.0, -120.0], [56.0, -120.0], [54.0, -118.0], [51.5, -116.5],
+    ],
+  },
+};
+
 export default function PhysicianMap({
   physicians,
   heatmapData,
   showHeatmap,
   onSelectPhysician,
   onBoundsChange,
+  selectedHealthAuthorities,
 }) {
   const mapRef = useRef(null);
   const mapInstance = useRef(null);
   const markersRef = useRef(null);
   const heatLayerRef = useRef(null);
+  const haLayerRef = useRef(null);
 
   // Initialize map once
   useEffect(() => {
@@ -208,6 +253,36 @@ export default function PhysicianMap({
       heatLayerRef.current = heat;
     }
   }, [showHeatmap, heatmapData]);
+
+  // Update health authority boundary overlay
+  useEffect(() => {
+    const map = mapInstance.current;
+    if (!map) return;
+
+    if (haLayerRef.current) {
+      map.removeLayer(haLayerRef.current);
+      haLayerRef.current = null;
+    }
+
+    if (selectedHealthAuthorities && selectedHealthAuthorities.length > 0) {
+      const group = L.layerGroup();
+      selectedHealthAuthorities.forEach((ha) => {
+        const boundary = HA_BOUNDARIES[ha];
+        if (!boundary) return;
+        const polygon = L.polygon(boundary.coords, {
+          color: boundary.color,
+          weight: 2,
+          fillColor: boundary.color,
+          fillOpacity: 0.08,
+          dashArray: '6 4',
+        });
+        polygon.bindTooltip(ha, { sticky: true, className: 'physician-tooltip' });
+        group.addLayer(polygon);
+      });
+      group.addTo(map);
+      haLayerRef.current = group;
+    }
+  }, [selectedHealthAuthorities]);
 
   return <div ref={mapRef} className="map-container" />;
 }
